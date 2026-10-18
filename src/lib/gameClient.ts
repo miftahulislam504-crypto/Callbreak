@@ -82,10 +82,28 @@ export class GameConnection {
       const { token } = JSON.parse(raw) as { token: string };
       await this.attach(await this.client.reconnect(token));
       return true;
-    } catch {
-      await this.opts.storage.removeItem(TOKEN_KEY);
+    } catch (e) {
+      // A server we could not reach keeps our token for the next try; a refused token is dead.
+      const m = String(e instanceof Error ? e.message : e);
+      const code = String((e as { code?: unknown })?.code ?? '');
+      const unreachable =
+        /^(ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT)/.test(code) || /fetch failed|network request failed|timed out|aborted/i.test(m);
+      if (!unreachable) await this.opts.storage.removeItem(TOKEN_KEY);
       return false;
     }
+  }
+
+  /** The app came back to the foreground: refresh the table, or get back into the room. */
+  async onForeground(): Promise<'in-room' | 'resumed' | 'none'> {
+    if (this.room) {
+      try {
+        this.room.send('sync');
+      } catch {
+        // the socket is already gone; the SDK's own reconnect takes over
+      }
+      return 'in-room';
+    }
+    return (await this.resume()) ? 'resumed' : 'none';
   }
 
   send(type: string, payload?: unknown): void {

@@ -65,6 +65,9 @@ export interface RoomView {
   deadline: number | null;
   nextRoundAt: number | null;
   serverTime: number;
+  /** How long a human has to bid / play. */
+  bidSeconds: number;
+  playSeconds: number;
   game: GameView | null;
 }
 

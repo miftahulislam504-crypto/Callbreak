@@ -15,7 +15,7 @@ export function useTrickDisplay(game: GameView | null): TrickSnapshot {
   return useSyncExternalStore(player.subscribe, player.getSnapshot);
 }
 
-// Matches the server defaults (CB_BID_SECONDS / CB_PLAY_SECONDS); only used to size the bar.
+// Fallbacks for an older server that does not send its turn lengths.
 const BID_MS = 20_000;
 const PLAY_MS = 30_000;
 
@@ -26,7 +26,8 @@ export function useTurnTimer(view: RoomView | null): { seat: number; timer: Turn
     if (!view || !g || view.deadline === null) return null;
     if (g.phase !== 'bidding' && g.phase !== 'playing') return null;
     const remainingMs = Math.max(0, view.deadline - view.serverTime);
-    const totalMs = Math.max(g.phase === 'bidding' ? BID_MS : PLAY_MS, remainingMs);
+    const configured = g.phase === 'bidding' ? view.bidSeconds * 1000 : view.playSeconds * 1000;
+    const totalMs = Math.max(Number.isFinite(configured) && configured > 0 ? configured : g.phase === 'bidding' ? BID_MS : PLAY_MS, remainingMs);
     return { seat: g.turn, timer: { key: String(view.deadline), remainingMs, totalMs } };
   }, [view]);
 }

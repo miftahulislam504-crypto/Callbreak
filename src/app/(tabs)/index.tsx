@@ -16,7 +16,7 @@ import { useRoom } from '@/state/room';
 export default function Home() {
   const t = useT();
   const { profile } = useAuth();
-  const { view, busy, error, createRoom, joinRoom, quickMatch, clearError } = useRoom();
+  const { view, busy, error, server, notice, createRoom, joinRoom, quickMatch, clearError, clearNotice } = useRoom();
 
   const [roomName, setRoomName] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
@@ -52,6 +52,8 @@ export default function Home() {
   return (
     <Screen tabs onRefresh={load} refreshing={refreshing}>
       <ThemedText type="subtitle">{t('hello', { name: profile?.name ?? '' })}</ThemedText>
+      {server === 'waking' ? <Banner tone="info" text={t('serverWaking')} /> : null}
+      {notice === 'roomLost' ? <Banner text={t('roomLost')} onClose={clearNotice} /> : null}
       {error ? <Banner text={errorText(t, error)} onClose={clearError} /> : null}
 
       <Card>

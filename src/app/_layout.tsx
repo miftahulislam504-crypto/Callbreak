@@ -1,7 +1,7 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { AppState, useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/lib/auth';
@@ -11,12 +11,19 @@ SplashScreen.preventAutoHideAsync();
 
 function Gate() {
   const { status } = useAuth();
-  const resume = useRoom((s) => s.resume);
+  const bootstrap = useRoom((s) => s.bootstrap);
+  const foreground = useRoom((s) => s.foreground);
 
-  // Back into the room we were in if the app was closed or the connection dropped.
+  // Wake the server (free hosts sleep) and get back into the room we were in, then keep the
+  // connection healthy whenever the app returns from the background.
   useEffect(() => {
-    if (status === 'in') void resume();
-  }, [status, resume]);
+    if (status !== 'in') return;
+    void bootstrap();
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') void foreground();
+    });
+    return () => sub.remove();
+  }, [status, bootstrap, foreground]);
 
   if (status === 'loading') return null;
   return (

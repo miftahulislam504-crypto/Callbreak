@@ -92,9 +92,9 @@ export function Field({ label, ...props }: { label?: string } & TextInputProps) 
   );
 }
 
-export function Banner({ text, onClose }: { text: string; onClose?: () => void }) {
+export function Banner({ text, onClose, tone = 'error' }: { text: string; onClose?: () => void; tone?: 'error' | 'info' }) {
   return (
-    <Pressable onPress={onClose} style={styles.banner}>
+    <Pressable onPress={onClose} style={[styles.banner, tone === 'info' && { backgroundColor: '#2F5FD0' }]}>
       <ThemedText type="small" style={{ color: '#fff' }}>{text}</ThemedText>
     </Pressable>
   );

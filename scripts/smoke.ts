@@ -17,11 +17,11 @@ function memStorage(): KeyValueStorage & { data: Map<string, string> } {
   };
 }
 
-function player(name: string) {
+function player(name: string, url: string = URL) {
   const storage = memStorage();
   const state: { view: RoomView | null; errors: string[]; closed: string[] } = { view: null, errors: [], closed: [] };
   const conn = new GameConnection({
-    url: URL,
+    url,
     storage,
     getIdentity: async () => ({ uid: `uid-${name}`, name, idToken: null }),
     listeners: {
@@ -80,9 +80,19 @@ async function main() {
 
   // resume with a bogus token fails cleanly and clears it
   const c = player('Carol');
-  await c.storage.setItem('cb.reconnect', JSON.stringify({ token: 'bogus', savedAt: Date.now() }));
+  await c.storage.setItem('cb.reconnect', JSON.stringify({ token: 'ZZZZZZ:bogus', savedAt: Date.now() }));
   assert.equal(await c.conn.resume(), false);
   assert.equal(c.storage.data.has('cb.reconnect'), false);
+
+  // coming back to the foreground: a connected client refreshes; one with nothing to resume says so
+  assert.equal(await a.conn.onForeground(), 'in-room');
+  assert.equal(await player('Dave').conn.onForeground(), 'none');
+
+  // an unreachable server (still asleep) keeps the token so a later resume can work
+  const eve = player('Eve', 'ws://localhost:1');
+  await eve.storage.setItem('cb.reconnect', JSON.stringify({ token: 'ZZZZZZ:tok', savedAt: Date.now() }));
+  assert.equal(await eve.conn.resume(), false);
+  assert.equal(eve.storage.data.has('cb.reconnect'), true, 'token kept when the server is unreachable');
 
   await a.conn.leave();
   console.log('smoke: OK');

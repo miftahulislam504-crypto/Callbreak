@@ -14,7 +14,7 @@ export function toAppError(e: unknown): AppError {
     return { code: 'room_not_found', message };
   }
   if (m.includes('full') || m.includes('locked')) return { code: 'room_full', message };
-  if (m.includes('network') || m.includes('fetch') || m.includes('timeout') || m.includes('econn') || m.includes('websocket') || m.includes('abort')) {
+  if (/network|fetch failed|failed to fetch|timeout|timed out|\beconn|websocket|abort/i.test(message) || /^(ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT)/.test(code)) {
     return { code: 'network', message };
   }
   return { code: 'unknown', message };
