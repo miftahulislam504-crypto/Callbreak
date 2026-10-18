@@ -1,120 +1,119 @@
 import { Redirect } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
+import { Alert, Pressable, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Banner, Button, Card, Chip, Row, Screen } from '@/components/kit';
-import { ThemedText } from '@/components/themed-text';
-import { ACCENT, GOLD } from '@/constants/palette';
-import { cardLabel, isRed } from '@/lib/cards';
+import { Banner } from '@/components/kit';
+import { BidSheet } from '@/components/table/BidSheet';
+import { GameOverOverlay } from '@/components/table/GameOverOverlay';
+import { useTrickDisplay, useTurnTimer } from '@/components/table/hooks';
+import { RoundEndOverlay } from '@/components/table/RoundEndOverlay';
+import { ScoreSheet } from '@/components/table/ScoreSheet';
+import { Table } from '@/components/table/Table';
+import { FELT_DARK, GOLD } from '@/constants/palette';
+import { hapticTurn } from '@/lib/haptics';
 import { errorText, useT } from '@/lib/i18n';
-import type { Card as CardT } from '@/lib/types';
+import type { Card } from '@/lib/types';
 import { useRoom } from '@/state/room';
 
-/**
- * Temporary "test table": enough UI to play a whole game end to end.
- * The real table (card layout, animations, sounds) is Phase 3.
- */
 export default function Game() {
   const t = useT();
   const { view, link, error, send, leaveRoom, clearError } = useRoom();
+  const game = view?.game ?? null;
+  const trick = useTrickDisplay(game);
+  const turnTimer = useTurnTimer(view);
+  const [scores, setScores] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const me = view?.mySeat ?? 0;
+  const live = !!game && (game.phase === 'bidding' || game.phase === 'playing');
+  const myTurn = live && game.turn === me;
+
+  // A nudge when it becomes your turn (once per turn: the key changes with your hand size).
+  const turnKey = myTurn ? `${game.round}:${game.phase}:${game.handCounts[me]}` : null;
+  useEffect(() => {
+    if (turnKey) hapticTurn();
+  }, [turnKey]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 2200);
+    return () => clearTimeout(id);
+  }, [toast]);
 
   if (!view) return <Redirect href="/" />;
-  if (view.status === 'lobby') return <Redirect href="/lobby" />;
-  const g = view.game;
-  if (!g) return <Redirect href="/lobby" />;
+  if (view.status === 'lobby' || !game) return <Redirect href="/lobby" />;
 
-  const me = view.mySeat;
-  const name = (seat: number) => view.seats[seat]?.name ?? '';
-  const myTurn = g.turn === me;
-  const canBid = g.phase === 'bidding' && myTurn;
-  const canPlay = g.phase === 'playing' && myTurn;
-  const isLegal = (c: CardT) => g.legal.some((l) => l.suit === c.suit && l.rank === c.rank);
-  const bids = Array.from({ length: g.maxBid - g.minBid + 1 }, (_, i) => g.minBid + i);
+  const confirmLeave = () =>
+    Alert.alert(t('leaveConfirmTitle'), t('leaveConfirmBody'), [
+      { text: t('stay'), style: 'cancel' },
+      { text: t('leave'), style: 'destructive', onPress: () => void leaveRoom() },
+    ]);
+
+  const status = !live
+    ? ''
+    : myTurn
+      ? game.phase === 'bidding' ? t('chooseBid') : t('yourTurn')
+      : t('turnOf', { name: view.seats[game.turn]?.name ?? '' });
 
   return (
-    <Screen>
-      <Row style={{ justifyContent: 'space-between' }}>
-        <ThemedText type="subtitle">{t('gameTitle')}</ThemedText>
-        <ThemedText type="smallBold">{t('roundN', { n: g.round })} · {g.targetScore}</ThemedText>
-      </Row>
-      <ThemedText type="small" themeColor="textSecondary">{t('phase3Note')}</ThemedText>
+    <SafeAreaView style={{ flex: 1, backgroundColor: FELT_DARK }}>
+      <StatusBar style="light" />
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8 }}>
+        <View>
+          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>{t('roundN', { n: game.round })}</Text>
+          <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>{t('targetReach', { n: game.targetScore })}</Text>
+        </View>
+        <Text style={{ color: myTurn ? GOLD : 'rgba(255,255,255,0.85)', fontWeight: '700', flexShrink: 1, textAlign: 'center', paddingHorizontal: 8 }} numberOfLines={1}>
+          {status}
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 14 }}>
+          <Pressable onPress={() => setScores(true)} hitSlop={8}>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>{t('scoreSheet')}</Text>
+          </Pressable>
+          <Pressable onPress={confirmLeave} hitSlop={8}>
+            <Text style={{ color: '#FF8A8F', fontWeight: '700' }}>{t('leave')}</Text>
+          </Pressable>
+        </View>
+      </View>
+
       {link === 'reconnecting' ? <Banner text={t('reconnecting')} /> : null}
       {error ? <Banner text={errorText(t, error)} onClose={clearError} /> : null}
 
-      <Card>
-        {g.phase === 'bidding' || g.phase === 'playing' ? (
-          <ThemedText type="smallBold" style={{ color: myTurn ? ACCENT : undefined }}>
-            {myTurn ? t('yourTurn') : t('turnOf', { name: name(g.turn) })}
-          </ThemedText>
+      <View style={{ flex: 1 }}>
+        <Table
+          view={view}
+          game={game}
+          shown={trick.shown}
+          sweepTo={trick.sweepTo}
+          turnTimer={turnTimer}
+          onPlay={(c: Card) => send('play', { suit: c.suit, rank: c.rank })}
+          onIllegal={() => setToast(t('cardNotAllowed'))}
+          t={t}
+        />
+        {game.phase === 'bidding' && myTurn ? <BidSheet game={game} onBid={(n) => send('bid', { bid: n })} t={t} /> : null}
+        {toast ? (
+          <View pointerEvents="none" style={{ position: 'absolute', left: 20, right: 20, bottom: 190, backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: 12, padding: 12 }}>
+            <Text style={{ color: '#fff', textAlign: 'center' }}>{toast}</Text>
+          </View>
         ) : null}
-        {g.phase === 'roundEnd' ? <ThemedText type="smallBold">{t('nextRoundSoon')}</ThemedText> : null}
-        {g.phase === 'finished' ? (
-          <>
-            <ThemedText type="subtitle" style={{ color: GOLD }}>{t('gameOver')}</ThemedText>
-            <ThemedText type="smallBold">{t('winnerIs', { names: (g.winners ?? []).map(name).join(', ') })}</ThemedText>
-          </>
-        ) : null}
+      </View>
 
-        {view.seats.map((s) => (
-          <Row key={s.seat} style={{ justifyContent: 'space-between' }}>
-            <View style={{ flex: 1 }}>
-              <ThemedText type="smallBold">
-                {s.name}{s.seat === me ? ` (${t('you')})` : ''}{s.seat === g.dealer ? ' ◆' : ''}
-              </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('bidTricks', { bid: g.bids[s.seat] ?? '–', won: g.tricksWon[s.seat] })}
-              </ThemedText>
-            </View>
-            <ThemedText type="smallBold">{t('totalPts', { n: g.totals[s.seat].toFixed(1) })}</ThemedText>
-          </Row>
-        ))}
-      </Card>
-
-      {g.trick.length > 0 ? (
-        <Card>
-          <ThemedText type="small" themeColor="textSecondary">{t('trickNow')}</ThemedText>
-          <Row style={{ flexWrap: 'wrap' }}>
-            {g.trick.map((p) => (
-              <ThemedText key={p.seat} type="smallBold" style={{ color: isRed(p.card) ? '#D9363E' : undefined }}>
-                {name(p.seat)}: {cardLabel(p.card)}
-              </ThemedText>
-            ))}
-          </Row>
-        </Card>
+      {game.phase === 'roundEnd' && trick.idle ? <RoundEndOverlay view={view} game={game} t={t} /> : null}
+      {game.phase === 'finished' && trick.idle ? (
+        <GameOverOverlay
+          view={view}
+          game={game}
+          t={t}
+          onRematch={() => send('rematch')}
+          onScores={() => setScores(true)}
+          onLeave={() => void leaveRoom()}
+        />
       ) : null}
 
-      {canBid ? (
-        <Card>
-          <ThemedText type="smallBold">{t('chooseBid')}</ThemedText>
-          <Row style={{ flexWrap: 'wrap' }}>
-            {bids.map((b) => (
-              <Chip key={b} label={String(b)} onPress={() => send('bid', { bid: b })} />
-            ))}
-          </Row>
-        </Card>
-      ) : null}
-
-      <Card>
-        <ThemedText type="small" themeColor="textSecondary">{t('myHand')}</ThemedText>
-        <Row style={{ flexWrap: 'wrap' }}>
-          {g.myHand.map((c) => {
-            const ok = canPlay && isLegal(c);
-            return (
-              <Pressable
-                key={`${c.suit}${c.rank}`}
-                disabled={!ok}
-                onPress={() => send('play', { suit: c.suit, rank: c.rank })}
-                style={{ borderWidth: 1.5, borderColor: ok ? ACCENT : '#8884', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, opacity: canPlay && !ok ? 0.35 : 1 }}>
-                <ThemedText type="smallBold" style={{ color: isRed(c) ? '#D9363E' : undefined, fontSize: 18 }}>{cardLabel(c)}</ThemedText>
-              </Pressable>
-            );
-          })}
-        </Row>
-      </Card>
-
-      {g.phase === 'finished' && me === view.hostSeat ? (
-        <Button title={t('rematch')} onPress={() => send('rematch')} />
-      ) : null}
-      <Button title={t('leave')} variant="danger" onPress={() => void leaveRoom()} />
-    </Screen>
+      <ScoreSheet visible={scores} onClose={() => setScores(false)} view={view} game={game} t={t} />
+    </SafeAreaView>
   );
 }
