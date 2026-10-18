@@ -1,0 +1,223 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from 'zustand';
+
+import type { AppError } from './errors';
+
+const bn = {
+  appName: 'কল ব্রেক',
+  tagline: 'বন্ধুদের সাথে অনলাইনে তাস খেলো',
+  yourName: 'তোমার নাম',
+  playAsGuest: 'গেস্ট হিসেবে খেলো',
+  localModeNote: 'Firebase সেট করা নেই, তাই লোকাল গেস্ট মোডে চলছে (শুধু dev server-এ কাজ করবে)।',
+  tabHome: 'হোম',
+  tabProfile: 'প্রোফাইল',
+  hello: 'হ্যালো, {name}',
+  createRoom: 'নতুন রুম',
+  roomNameOpt: 'রুমের নাম (ঐচ্ছিক)',
+  privateRoom: 'প্রাইভেট রুম',
+  privateHint: 'শুধু Room ID দিয়ে ঢোকা যাবে',
+  targetScore: 'টার্গেট স্কোর',
+  custom: 'কাস্টম',
+  targetRange: '{min} থেকে {max}-এর মধ্যে দাও',
+  create: 'রুম বানাও',
+  joinById: 'Room ID দিয়ে ঢোকো',
+  roomIdPh: 'যেমন K7M2QX',
+  join: 'ঢোকো',
+  quickMatch: 'কুইক ম্যাচ',
+  quickHint: 'একই টার্গেটের রুমে বসিয়ে দেবে',
+  findMatch: 'ম্যাচ খোঁজো',
+  publicRooms: 'পাবলিক রুম',
+  noPublicRooms: 'এখন কোনো পাবলিক রুম নেই',
+  roomsLoadFail: 'রুমের তালিকা আনা যায়নি',
+  playersCount: '{n}/4 জন',
+  lobby: 'লবি',
+  roomId: 'Room ID',
+  tapToCopy: 'কপি করতে ট্যাপ করো',
+  copied: 'কপি হয়েছে',
+  share: 'শেয়ার',
+  shareMsg: 'কল ব্রেক খেলবে? আমার রুমে আসো। Room ID: {code}',
+  privateBadge: 'প্রাইভেট',
+  publicBadge: 'পাবলিক',
+  host: 'হোস্ট',
+  bot: 'বট',
+  you: 'তুমি',
+  offline: 'অফলাইন',
+  emptySeat: 'ফাঁকা',
+  addBot: 'বট যোগ করো',
+  removeBot: 'বাদ',
+  start: 'শুরু করো',
+  startWithBots: 'বট দিয়ে শুরু করো',
+  waitHost: 'হোস্ট শুরু করার অপেক্ষায়…',
+  leave: 'বের হও',
+  reconnecting: 'সংযোগ ফিরিয়ে আনা হচ্ছে…',
+  gameTitle: 'টেস্ট টেবিল',
+  phase3Note: 'এটা সাময়িক টেবিল, খেলা যাচাই করার জন্য। আসল কার্ড টেবিল ও অ্যানিমেশন Phase 3-এ আসবে।',
+  roundN: 'রাউন্ড {n}',
+  turnOf: 'এখন চাল: {name}',
+  yourTurn: 'তোমার পালা',
+  chooseBid: 'তোমার বিড দাও',
+  myHand: 'তোমার হাত',
+  trickNow: 'টেবিলে',
+  seatsInfo: 'খেলোয়াড়',
+  bidTricks: 'বিড {bid} · জিতেছে {won}',
+  totalPts: 'মোট {n}',
+  nextRoundSoon: 'পরের রাউন্ড শুরু হচ্ছে…',
+  gameOver: 'খেলা শেষ',
+  winnerIs: 'বিজয়ী: {names}',
+  rematch: 'আবার খেলো',
+  profileTitle: 'প্রোফাইল',
+  save: 'সেভ করো',
+  saved: 'সেভ হয়েছে',
+  language: 'ভাষা',
+  signOut: 'লগ আউট',
+  signOutWarn: 'গেস্ট অ্যাকাউন্ট থেকে লগ আউট করলে এই প্রোফাইল আর ফেরত পাওয়া যাবে না।',
+  server: 'সার্ভার',
+  mode: 'মোড',
+  modeFirebase: 'Firebase',
+  modeLocal: 'লোকাল গেস্ট',
+  playerId: 'আইডি',
+  err_unknown: 'কিছু একটা ভুল হয়েছে, আবার চেষ্টা করো',
+  err_network: 'সার্ভারে যাওয়া যাচ্ছে না। সার্ভার চালু আছে কিনা, URL ও Wi-Fi ঠিক আছে কিনা দেখো',
+  err_auth: 'লগইন যাচাই হয়নি, আবার ঢোকো',
+  err_room_not_found: 'এই Room ID-তে কোনো রুম নেই',
+  err_room_full: 'রুম ভর্তি বা খেলা শুরু হয়ে গেছে',
+  err_not_host: 'শুধু হোস্ট এটা করতে পারে',
+  err_need_players: '৪ জন লাগবে, নয়তো বট দিয়ে শুরু করো',
+  err_bad_target: 'টার্গেট স্কোর ঠিক নয়',
+  err_illegal: 'এই চাল বা বিড চলবে না',
+  err_already_started: 'খেলা আগেই শুরু হয়ে গেছে',
+  err_no_game: 'এখন কোনো খেলা চলছে না',
+  err_bad_card: 'কার্ডটা ঠিক নয়',
+  err_bad_seat: 'ওই সিটে বট নেই',
+  err_not_finished: 'খেলা এখনো শেষ হয়নি',
+} as const;
+
+export type Key = keyof typeof bn;
+type Dict = Record<Key, string>;
+
+const en: Dict = {
+  appName: 'Call Break',
+  tagline: 'Play cards online with your friends',
+  yourName: 'Your name',
+  playAsGuest: 'Play as guest',
+  localModeNote: 'Firebase is not configured, so this runs in local guest mode (works with a dev-mode server only).',
+  tabHome: 'Home',
+  tabProfile: 'Profile',
+  hello: 'Hello, {name}',
+  createRoom: 'New room',
+  roomNameOpt: 'Room name (optional)',
+  privateRoom: 'Private room',
+  privateHint: 'Only joinable with the Room ID',
+  targetScore: 'Target score',
+  custom: 'Custom',
+  targetRange: 'Enter a number from {min} to {max}',
+  create: 'Create room',
+  joinById: 'Join with Room ID',
+  roomIdPh: 'e.g. K7M2QX',
+  join: 'Join',
+  quickMatch: 'Quick match',
+  quickHint: 'Seats you in a room with the same target',
+  findMatch: 'Find match',
+  publicRooms: 'Public rooms',
+  noPublicRooms: 'No public rooms right now',
+  roomsLoadFail: 'Could not load rooms',
+  playersCount: '{n}/4 players',
+  lobby: 'Lobby',
+  roomId: 'Room ID',
+  tapToCopy: 'Tap to copy',
+  copied: 'Copied',
+  share: 'Share',
+  shareMsg: 'Play Call Break with me! Room ID: {code}',
+  privateBadge: 'Private',
+  publicBadge: 'Public',
+  host: 'Host',
+  bot: 'Bot',
+  you: 'You',
+  offline: 'Offline',
+  emptySeat: 'Empty',
+  addBot: 'Add bot',
+  removeBot: 'Remove',
+  start: 'Start',
+  startWithBots: 'Start with bots',
+  waitHost: 'Waiting for the host to start…',
+  leave: 'Leave',
+  reconnecting: 'Reconnecting…',
+  gameTitle: 'Test table',
+  phase3Note: 'A temporary table for checking the game. The real card table and animations arrive in Phase 3.',
+  roundN: 'Round {n}',
+  turnOf: 'Turn: {name}',
+  yourTurn: 'Your turn',
+  chooseBid: 'Place your bid',
+  myHand: 'Your hand',
+  trickNow: 'On the table',
+  seatsInfo: 'Players',
+  bidTricks: 'Bid {bid} · won {won}',
+  totalPts: 'Total {n}',
+  nextRoundSoon: 'Next round starting…',
+  gameOver: 'Game over',
+  winnerIs: 'Winner: {names}',
+  rematch: 'Play again',
+  profileTitle: 'Profile',
+  save: 'Save',
+  saved: 'Saved',
+  language: 'Language',
+  signOut: 'Sign out',
+  signOutWarn: 'Signing out of a guest account means this profile cannot be recovered.',
+  server: 'Server',
+  mode: 'Mode',
+  modeFirebase: 'Firebase',
+  modeLocal: 'Local guest',
+  playerId: 'ID',
+  err_unknown: 'Something went wrong, please try again',
+  err_network: 'Cannot reach the server. Check that it is running and that the URL and Wi-Fi are right',
+  err_auth: 'Sign-in could not be verified, please sign in again',
+  err_room_not_found: 'No room with that Room ID',
+  err_room_full: 'The room is full or the game has already started',
+  err_not_host: 'Only the host can do that',
+  err_need_players: 'Need 4 players, or start with bots',
+  err_bad_target: 'Invalid target score',
+  err_illegal: 'That move or bid is not allowed',
+  err_already_started: 'The game has already started',
+  err_no_game: 'No game is running',
+  err_bad_card: 'Invalid card',
+  err_bad_seat: 'There is no bot in that seat',
+  err_not_finished: 'The game is not finished yet',
+};
+
+export type Lang = 'bn' | 'en';
+const dicts: Record<Lang, Dict> = { bn, en };
+const LANG_KEY = 'cb.lang';
+
+export const useLang = create<{ lang: Lang; setLang(l: Lang): void }>((set) => ({
+  lang: 'bn',
+  setLang: (lang) => {
+    set({ lang });
+    void AsyncStorage.setItem(LANG_KEY, lang);
+  },
+}));
+
+export async function loadLang(): Promise<void> {
+  const saved = await AsyncStorage.getItem(LANG_KEY);
+  if (saved === 'bn' || saved === 'en') useLang.setState({ lang: saved });
+}
+
+export type Vars = Record<string, string | number>;
+export type T = (key: Key, vars?: Vars) => string;
+
+export function translate(lang: Lang, key: Key, vars?: Vars): string {
+  let s = dicts[lang][key];
+  if (vars) for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, String(v));
+  return s;
+}
+
+export function useT(): T {
+  const lang = useLang((s) => s.lang);
+  return (key, vars) => translate(lang, key, vars);
+}
+
+/** Translated text for a server/app error; falls back to the raw message for unknown codes. */
+export function errorText(t: T, e: AppError): string {
+  const key = `err_${e.code}`;
+  if (key in bn) return t(key as Key);
+  return e.message || t('err_unknown');
+}
