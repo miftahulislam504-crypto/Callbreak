@@ -10,6 +10,8 @@ import type { RoomView } from '@/lib/types';
 
 interface RoomState {
   view: RoomView | null;
+  /** Seat -> photo data URI (null = none). Filled by the server's 'avatars' message. */
+  avatars: (string | null)[];
   link: 'online' | 'reconnecting';
   busy: boolean;
   error: AppError | null;
@@ -39,9 +41,10 @@ export const useRoom = create<RoomState>((set, get) => {
     getIdentity,
     listeners: {
       onState: (view) => set({ view }),
+      onAvatars: (avatars) => set({ avatars }),
       onError: (e) => set({ error: { code: e.code, message: e.message } }),
       onLink: (link) => set({ link }),
-      onClosed: (reason) => set({ view: null, link: 'online', ...(reason === 'lost' ? { notice: 'roomLost' as const } : {}) }),
+      onClosed: (reason) => set({ view: null, avatars: [], link: 'online', ...(reason === 'lost' ? { notice: 'roomLost' as const } : {}) }),
     },
   });
 
@@ -76,6 +79,7 @@ export const useRoom = create<RoomState>((set, get) => {
 
   return {
     view: null,
+    avatars: [],
     link: 'online',
     busy: false,
     error: null,
