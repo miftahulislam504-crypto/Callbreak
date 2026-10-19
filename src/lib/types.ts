@@ -8,7 +8,7 @@ export interface PlayedCard {
   seat: number;
   card: Card;
 }
-export type Phase = 'lobby' | 'bidding' | 'playing' | 'roundEnd' | 'finished';
+export type Phase = 'lobby' | 'dealing' | 'bidding' | 'playing' | 'roundEnd' | 'finished';
 
 export interface RoundResult {
   round: number;
@@ -35,14 +35,14 @@ export interface GameView {
   tricksWon: number[];
   trick: PlayedCard[];
   lastTrick: { cards: PlayedCard[]; winner: number } | null;
-  /** Points, one decimal. */
+  /** Whole points. */
   totals: number[];
   history: RoundResult[];
   winners: number[] | null;
   ranking: number[] | null;
 }
 
-export type RoomStatus = 'lobby' | 'bidding' | 'playing' | 'roundEnd' | 'finished';
+export type RoomStatus = 'lobby' | 'dealing' | 'bidding' | 'playing' | 'roundEnd' | 'finished';
 
 export interface PublicSeat {
   seat: number;
@@ -64,6 +64,10 @@ export interface RoomView {
   seats: PublicSeat[];
   deadline: number | null;
   nextRoundAt: number | null;
+  /** Dealing phase: epoch ms the cards were dealt, how long the dealing animation and the look-at-cards time last. */
+  dealAt?: number | null;
+  dealMs?: number;
+  viewMs?: number;
   serverTime: number;
   /** How long a human has to bid / play. */
   bidSeconds: number;
