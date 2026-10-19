@@ -1,7 +1,7 @@
 import { Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Banner } from '@/components/kit';
@@ -14,6 +14,7 @@ import { Table } from '@/components/table/Table';
 import { CREAM, GOLD } from '@/constants/palette';
 import { hapticTurn } from '@/lib/haptics';
 import { errorText, useT } from '@/lib/i18n';
+import { isNoBidRound } from '@/lib/rules';
 import type { Card } from '@/lib/types';
 import { useRoom } from '@/state/room';
 
@@ -30,6 +31,7 @@ export default function Game() {
   const turnTimer = useTurnTimer(view);
   const dealClock = useDealClock(view);
   const [scores, setScores] = useState(false);
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const me = view?.mySeat ?? 0;
@@ -51,16 +53,20 @@ export default function Game() {
   if (!view) return <Redirect href="/" />;
   if (view.status === 'lobby' || !game) return <Redirect href="/lobby" />;
 
-  const confirmLeave = () =>
-    Alert.alert(t('leaveConfirmTitle'), t('leaveConfirmBody'), [
-      { text: t('stay'), style: 'cancel' },
-      { text: t('leave'), style: 'destructive', onPress: () => void leaveRoom() },
-    ]);
+  // Our own dialog: react-native-web's Alert.alert ignores buttons, so Leave did nothing on the web.
+  const confirmLeave = () => setConfirmingLeave(true);
+  const doLeave = () => {
+    setConfirmingLeave(false);
+    void leaveRoom();
+  };
+
+  const amReady = view.seats[me]?.ready === true;
+  const showReadyButton = !!dealClock && dealClock.stage === 'viewing';
 
   const status = dealClock
     ? dealClock.stage === 'dealing'
       ? t('dealingCards')
-      : t('lookAtCards', { s: dealClock.secondsLeft })
+      : amReady ? t('waitingOthers') : t('lookAtCards', { s: dealClock.secondsLeft })
     : !live
     ? ''
     : game.phase === 'bidding'
@@ -111,6 +117,24 @@ export default function Game() {
           </View>
         ) : null}
 
+        {showReadyButton ? (
+          <View pointerEvents="box-none" style={{ position: 'absolute', right: 14, top: 64, zIndex: 15 }}>
+            <Pressable
+              disabled={amReady}
+              onPress={() => send('ready')}
+              hitSlop={8}
+              style={({ pressed }) => ({
+                paddingHorizontal: 18, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center',
+                backgroundColor: amReady ? 'rgba(20,12,4,0.7)' : GOLD, borderWidth: 2, borderColor: amReady ? 'rgba(255,255,255,0.2)' : '#C99A2E',
+                opacity: pressed ? 0.85 : 1,
+              })}>
+              <Text style={{ color: amReady ? CREAM : '#2A1B00', fontWeight: '900', fontSize: 15 }}>
+                {amReady ? t('waitingOthers') : game.round <= 1 || isNoBidRound(game.round) ? t('readyPlay') : t('readyBid')}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         {showBidSheet ? <BidSheet game={game} onBid={(n) => send('bid', { bid: n })} t={t} /> : null}
         {game.phase === 'roundEnd' && trick.idle ? <RoundEndOverlay view={view} game={game} t={t} /> : null}
         {game.phase === 'finished' && trick.idle ? (
@@ -124,6 +148,23 @@ export default function Game() {
           />
         ) : null}
       </View>
+
+      <Modal visible={confirmingLeave} transparent animationType="fade" supportedOrientations={['landscape', 'landscape-left', 'landscape-right']} onRequestClose={() => setConfirmingLeave(false)}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.55)' }}>
+          <View style={{ width: 340, maxWidth: '90%', borderRadius: 18, padding: 18, gap: 12, backgroundColor: '#0B2F21', borderWidth: 2, borderColor: '#C99A2E' }}>
+            <Text style={{ color: CREAM, fontSize: 18, fontWeight: '900' }}>{t('leaveConfirmTitle')}</Text>
+            <Text style={{ color: 'rgba(246,241,227,0.8)', fontSize: 13.5 }}>{t('leaveConfirmBody')}</Text>
+            <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'flex-end' }}>
+              <Pressable onPress={() => setConfirmingLeave(false)} style={[chip, { height: 40, paddingHorizontal: 18 }]}>
+                <Text style={{ color: CREAM, fontWeight: '800', fontSize: 14 }}>{t('stay')}</Text>
+              </Pressable>
+              <Pressable onPress={doLeave} style={[chip, { height: 40, paddingHorizontal: 18, backgroundColor: 'rgba(160,30,36,0.9)' }]}>
+                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>{t('leave')}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <ScoreSheet visible={scores} onClose={() => setScores(false)} view={view} game={game} t={t} />
     </SafeAreaView>

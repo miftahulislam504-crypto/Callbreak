@@ -51,6 +51,8 @@ export interface PublicSeat {
   isBot: boolean;
   connected: boolean;
   auto: boolean;
+  /** Done looking at the cards (bots always are). */
+  ready?: boolean;
 }
 
 export interface RoomView {
