@@ -7,7 +7,7 @@ import type { Card, GameView, Suit } from '../src/lib/types';
 
 const c = (suit: Suit, rank: number): Card => ({ suit, rank });
 const base: GameView = {
-  phase: 'playing', round: 1, dealer: 0, turn: 1, targetScore: 29, minBid: 1, maxBid: 8, maxRounds: 30,
+  phase: 'playing', round: 1, dealer: 0, turn: 1, targetScore: 29, minBid: 2, maxBid: 8, maxRounds: 30,
   myHand: [], legal: [], handCounts: [13, 13, 13, 13], bids: [2, 2, 2, 2], tricksWon: [0, 0, 0, 0],
   trick: [], lastTrick: null, totals: [0, 0, 0, 0], history: [], winners: null, ranking: null,
 };
