@@ -2,7 +2,7 @@ import { Text, useWindowDimensions, View } from 'react-native';
 
 import { CARD_RED, CREAM, GOLD, GREEN_OK, MUTED } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
-import { isNoBidRound } from '@/lib/rules';
+import { fmtPts, isNoBidRound } from '@/lib/rules';
 import type { GameView, RoomView } from '@/lib/types';
 
 import { useCountdownSeconds } from './hooks';
@@ -21,7 +21,7 @@ export function RoundEndOverlay({ view, game, t }: { view: RoomView; game: GameV
       <View style={{ width: Math.min(560, width - 80), backgroundColor: '#0B2F21', borderRadius: 20, padding: 14, gap: 6, borderWidth: 2, borderColor: '#C99A2E' }}>
         <Text style={{ color: GOLD, fontSize: 20, fontWeight: '900', textAlign: 'center' }}>{t('roundOver', { n: r.round })}</Text>
         {view.seats.map((s, i) => {
-          const met = noBid ? true : r.tricks[i] >= r.bids[i];
+          const met = r.scores10[i] >= 0;
           return (
             <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 3, borderTopWidth: i ? 1 : 0, borderTopColor: 'rgba(255,255,255,0.08)' }}>
               <View style={{ flex: 1 }}>
@@ -34,7 +34,7 @@ export function RoundEndOverlay({ view, game, t }: { view: RoomView; game: GameV
                 {signed(r.scores10[i])}
               </Text>
               <Text style={{ color: game.totals[i] === top ? GOLD : CREAM, fontWeight: '900', width: 58, textAlign: 'right', fontSize: 15 }}>
-                {game.totals[i].toFixed(1)}
+                {fmtPts(game.totals[i])}
               </Text>
             </View>
           );

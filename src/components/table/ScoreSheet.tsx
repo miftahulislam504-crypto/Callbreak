@@ -2,10 +2,10 @@ import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from 'r
 
 import { CARD_RED, CREAM, GOLD, GREEN_OK, MUTED } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
-import { isNoBidRound } from '@/lib/rules';
+import { fmtPts, isNoBidRound } from '@/lib/rules';
 import type { GameView, RoomView } from '@/lib/types';
 
-export const signed = (score10: number): string => `${score10 >= 0 ? '+' : '−'}${(Math.abs(score10) / 10).toFixed(1)}`;
+export const signed = (score10: number): string => `${score10 >= 0 ? '+' : '−'}${fmtPts(Math.abs(score10) / 10)}`;
 
 /** Round by round scores plus the running totals. */
 export function ScoreSheet({
@@ -54,7 +54,7 @@ export function ScoreSheet({
             <Text style={{ width: 34, color: GOLD, fontSize: 13, fontWeight: '900' }}>Σ</Text>
             {game.totals.map((tot, i) => (
               <Text key={i} style={{ flex: 1, textAlign: 'center', color: tot === top ? GOLD : CREAM, fontSize: 17, fontWeight: '900' }}>
-                {tot.toFixed(1)}
+                {fmtPts(tot)}
               </Text>
             ))}
           </View>

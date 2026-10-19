@@ -5,6 +5,7 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTim
 import { Avatar } from '@/components/kit';
 import { CREAM, GOLD } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
+import { fmtPts } from '@/lib/rules';
 
 import { PlayingCard } from './PlayingCard';
 import { TimerBar, type TurnTimer } from './TimerBar';
@@ -97,7 +98,7 @@ function Identity(p: PlayerSeatProps) {
         <Text numberOfLines={1} style={{ color: CREAM, fontSize: 12, fontWeight: '800' }}>{p.name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
           <Text style={{ color: GOLD, fontSize: 13, fontWeight: '900' }}>{score}</Text>
-          <Text style={{ color: 'rgba(246,241,227,0.7)', fontSize: 10.5, fontWeight: '700' }}>{p.total.toFixed(1)}</Text>
+          <Text style={{ color: 'rgba(246,241,227,0.7)', fontSize: 10.5, fontWeight: '700' }}>{fmtPts(p.total)}</Text>
         </View>
       </View>
       {tags.length > 0 ? <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 9.5, fontWeight: '700', textShadowColor: '#000', textShadowRadius: 2 }}>{tags.join(' · ')}</Text> : null}

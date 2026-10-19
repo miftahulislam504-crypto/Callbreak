@@ -7,7 +7,11 @@ import type { T } from '@/lib/i18n';
 import type { ShownCard } from '@/lib/trickPlayer';
 import type { Card, GameView, RoomView } from '@/lib/types';
 
+import { cardsReceived, dealProgress } from '@/lib/dealing';
+
+import { DealAnimation } from './DealAnimation';
 import { Hand, handVisibleHeight } from './Hand';
+import type { DealClock } from './hooks';
 import { PlayerSeat, type SeatSide } from './PlayerSeat';
 import type { TurnTimer } from './TimerBar';
 import { TrickArea, trickAreaSize, trickCardWidth } from './TrickArea';
@@ -35,9 +39,10 @@ function Wood() {
  * your seat bottom-left and your hand fanned along the bottom edge.
  */
 export function Table({
-  view, game, shown, sweepTo, turnTimer, status, myTurn, toast, onPlay, onIllegal, t,
+  view, game, shown, sweepTo, turnTimer, dealClock, status, myTurn, toast, onPlay, onIllegal, t,
 }: {
   view: RoomView; game: GameView; shown: ShownCard[]; sweepTo: number | null;
+  dealClock: DealClock | null;
   turnTimer: { seat: number; timer: TurnTimer } | null;
   status: string; myTurn: boolean; toast: string | null;
   onPlay: (c: Card) => void; onIllegal: () => void; t: T;
@@ -52,6 +57,15 @@ export function Table({
   const area = trickAreaSize(trickW);
   const handTop = handVisibleHeight(h);
   const seatsSide = 150;
+
+  // Dealing: cards go out one by one, clockwise from the player after the dealer.
+  const dealing = game.phase === 'dealing';
+  const progress = dealing && dealClock ? dealProgress(dealClock.elapsed, dealClock.dealMs) : { launched: 52, landed: 52 };
+  const dealtTo = (seatIdx: number): number => {
+    if (!dealing) return game.handCounts[seatIdx];
+    const k = (seatIdx - game.dealer - 1 + 8) % 4; // 0 = first to be dealt a card
+    return Math.min(13, cardsReceived(progress.landed, k));
+  };
 
   // Clockwise from you: 1 = left, 2 = across, 3 = right.
   const seat = (rel: number, side: SeatSide) => {
@@ -70,7 +84,7 @@ export function Table({
         bid={game.bids[i]}
         noBid={noBid}
         won={game.tricksWon[i]}
-        handCount={game.handCounts[i]}
+        handCount={dealtTo(i)}
         total={game.totals[i]}
         timer={turnTimer && turnTimer.seat === i ? turnTimer.timer : null}
         t={t}
@@ -84,6 +98,17 @@ export function Table({
   const bandBottom = h - handTop - 30;
   const trickTop = Math.max(bandTop, bandTop + (bandBottom - bandTop - area.h) / 2);
 
+  // Where each player's cards land, in dealing order (first receiver first), for the deal animation.
+  const spot = (rel: number) =>
+    rel === 0 ? { x: w / 2, y: h - handTop / 2 }
+      : rel === 1 ? { x: 120, y: h / 2 - 8 }
+        : rel === 2 ? { x: w / 2 + 52, y: 44 }
+          : { x: w - 120, y: h / 2 - 8 };
+  const dealCenter = { x: w / 2, y: trickTop + area.h / 2 };
+  const dealTargets = [0, 1, 2, 3].map((k) => spot((((game.dealer + 1 + k) % 4) - me + 4) % 4));
+  const myK = (me - game.dealer - 1 + 8) % 4;
+  const myDealt = dealing ? Math.min(13, cardsReceived(progress.landed, myK)) : game.myHand.length;
+
   return (
     <View style={{ flex: 1, overflow: 'hidden' }} onLayout={(e) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
       <Wood />
@@ -96,10 +121,14 @@ export function Table({
         <TrickArea shown={shown} sweepTo={sweepTo} mySeat={me} cardW={trickW} />
       </View>
 
+      {dealing && dealClock ? <DealAnimation center={dealCenter} targets={dealTargets} progress={progress} /> : null}
+
       <Hand
         key={game.round}
-        cards={game.myHand}
+        cards={dealing ? game.myHand.slice(0, myDealt) : game.myHand}
         legal={game.legal}
+        hidden={dealing && dealClock?.stage === 'dealing'}
+        instant={dealing}
         canPlay={game.phase === 'playing' && game.turn === me}
         onPlay={onPlay}
         onIllegal={onIllegal}
@@ -117,7 +146,7 @@ export function Table({
         <View
           pointerEvents="none"
           style={{
-            position: 'absolute', left: w / 2 - 110, width: 220, bottom: handTop + 6, alignItems: 'center',
+            position: 'absolute', left: w / 2 - 160, width: 320, bottom: handTop + 6, alignItems: 'center',
             paddingVertical: 5, borderRadius: 16, backgroundColor: myTurn ? GOLD : 'rgba(20,12,4,0.65)',
             borderWidth: 1, borderColor: myTurn ? '#C99A2E' : 'rgba(255,255,255,0.12)',
           }}>

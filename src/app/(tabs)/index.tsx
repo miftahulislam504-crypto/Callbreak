@@ -1,14 +1,13 @@
 import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Avatar, Banner, Button, Card, CardTitle, Field, MenuBackdrop, Row } from '@/components/kit';
-import { TargetPicker } from '@/components/target-picker';
+import { Avatar, Banner, Card, CardTitle, MenuBackdrop, Row } from '@/components/kit';
+import { MenuTile } from '@/components/menu';
 import { BG_DEEP, CREAM, GOLD, LINE, MUTED } from '@/constants/palette';
 import { fetchPublicRooms } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { LIMITS } from '@/lib/env';
 import { errorText, useT } from '@/lib/i18n';
 import type { PublicRoom } from '@/lib/types';
 import { useRoom } from '@/state/room';
@@ -16,13 +15,7 @@ import { useRoom } from '@/state/room';
 export default function Home() {
   const t = useT();
   const { profile } = useAuth();
-  const { view, busy, error, server, notice, createRoom, joinRoom, quickMatch, clearError, clearNotice } = useRoom();
-
-  const [roomName, setRoomName] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [target, setTarget] = useState<number>(LIMITS.defaultTarget);
-  const [quickTarget, setQuickTarget] = useState<number>(LIMITS.defaultTarget);
-  const [code, setCode] = useState('');
+  const { view, busy, error, server, notice, joinRoom, clearError, clearNotice } = useRoom();
 
   const [rooms, setRooms] = useState<PublicRoom[] | null>(null);
   const [roomsFailed, setRoomsFailed] = useState(false);
@@ -50,8 +43,6 @@ export default function Home() {
   if (view) return <Redirect href={view.status === 'lobby' ? '/lobby' : '/game'} />;
 
   const name = profile?.name ?? '';
-  const col = { flex: 1, minWidth: 0 } as const;
-  const colContent = { gap: 12, paddingBottom: 14 } as const;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: BG_DEEP }}>
@@ -67,9 +58,7 @@ export default function Home() {
           </View>
         </Row>
         <Row style={{ gap: 10 }}>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ color: GOLD, fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>♠ {t('appName')}</Text>
-          </View>
+          <Text style={{ color: GOLD, fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>♠ {t('appName')}</Text>
           <Pressable
             onPress={() => router.push('/profile')}
             hitSlop={8}
@@ -88,55 +77,21 @@ export default function Home() {
         {error ? <Banner text={errorText(t, error)} onClose={clearError} /> : null}
       </View>
 
-      {/* Three columns so everything fits a landscape screen without long scrolling */}
-      <View style={{ flex: 1, flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingTop: 4 }}>
-        <ScrollView style={col} contentContainerStyle={colContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <Card style={{ backgroundColor: '#12573C', borderColor: 'rgba(242,193,78,0.35)' }}>
-            <CardTitle icon="⚡" title={t('quickMatch')} hint={t('quickHint')} />
-            <TargetPicker value={quickTarget} onChange={setQuickTarget} />
-            <Button title={t('findMatch')} variant="gold" onPress={() => void quickMatch(quickTarget)} loading={busy} />
-          </Card>
-          <Card>
-            <CardTitle icon="🔑" title={t('joinById')} />
-            <Field
-              value={code}
-              onChangeText={(s) => setCode(s.replace(/[^a-zA-Z0-9]/g, '').toUpperCase())}
-              placeholder={t('roomIdPh')}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              maxLength={6}
-              style={{ letterSpacing: 4, fontWeight: '800', fontSize: 18 }}
-            />
-            <Button title={t('join')} variant="secondary" onPress={() => void joinRoom(code)} disabled={code.length !== 6} loading={busy} />
-          </Card>
-        </ScrollView>
+      <View style={{ flex: 1, flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 14 }}>
+        {/* Left: four rectangular cards; each opens its own page */}
+        <View style={{ flex: 1.5, minWidth: 0, gap: 12 }}>
+          <View style={{ flex: 1, flexDirection: 'row', gap: 12 }}>
+            <MenuTile icon="⚡" title={t('quickMatch')} hint={t('quickHint')} highlight onPress={() => router.push('/quick-match')} />
+            <MenuTile icon="🔑" title={t('joinById')} hint={t('joinHint')} onPress={() => router.push('/join')} />
+          </View>
+          <View style={{ flex: 1, flexDirection: 'row', gap: 12 }}>
+            <MenuTile icon="♣" title={t('createRoom')} hint={t('createHint')} onPress={() => router.push('/new-room')} />
+            <MenuTile icon="✦" title={t('moreTitle')} hint={t('moreHint')} muted onPress={() => router.push('/more')} />
+          </View>
+        </View>
 
-        <ScrollView style={col} contentContainerStyle={colContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <Card>
-            <CardTitle icon="♣" title={t('createRoom')} />
-            <Field label={t('roomNameOpt')} value={roomName} onChangeText={setRoomName} maxLength={LIMITS.maxName} />
-            <Row style={{ justifyContent: 'space-between' }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: CREAM, fontWeight: '800', fontSize: 14 }}>{t('privateRoom')}</Text>
-                <Text style={{ color: MUTED, fontSize: 12 }}>{t('privateHint')}</Text>
-              </View>
-              <Switch
-                value={isPrivate}
-                onValueChange={setIsPrivate}
-                trackColor={{ false: 'rgba(255,255,255,0.18)', true: GOLD }}
-                thumbColor="#fff"
-              />
-            </Row>
-            <TargetPicker value={target} onChange={setTarget} />
-            <Button
-              title={t('create')}
-              onPress={() => void createRoom({ roomName: roomName.trim() || undefined, isPrivate, targetScore: target })}
-              loading={busy}
-            />
-          </Card>
-        </ScrollView>
-
-        <View style={col}>
+        {/* Right: public rooms */}
+        <View style={{ flex: 1, minWidth: 0 }}>
           <Card style={{ flex: 1 }}>
             <Row style={{ justifyContent: 'space-between' }}>
               <CardTitle icon="♥" title={t('publicRooms')} />

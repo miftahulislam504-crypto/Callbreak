@@ -2,6 +2,7 @@ import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-na
 
 import { ACCENT, CARD_RED, CREAM, GOLD, MUTED } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
+import { fmtPts } from '@/lib/rules';
 import type { GameView, RoomView } from '@/lib/types';
 
 const MEDAL = ['🥇', '🥈', '🥉', '4'];
@@ -43,7 +44,7 @@ export function GameOverOverlay({
                 <Text numberOfLines={1} style={{ flex: 1, color: CREAM, fontWeight: '800' }}>
                   {view.seats[seat].name}{seat === view.mySeat ? ` (${t('you')})` : ''}
                 </Text>
-                <Text style={{ color: winners.includes(seat) ? GOLD : CREAM, fontWeight: '900' }}>{game.totals[seat].toFixed(1)}</Text>
+                <Text style={{ color: winners.includes(seat) ? GOLD : CREAM, fontWeight: '900' }}>{fmtPts(game.totals[seat])}</Text>
               </View>
             ))}
           </ScrollView>

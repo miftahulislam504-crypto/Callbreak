@@ -45,3 +45,52 @@ export function useCountdownSeconds(deadline: number | null, serverTime: number)
   }, [deadline, serverTime]);
   return deadline === null ? null : secs;
 }
+
+// Fallbacks for an older server that does not send its dealing lengths.
+const DEAL_MS = 3000;
+const VIEW_MS = 5000;
+
+export interface DealClock {
+  /** ms since the cards were dealt. */
+  elapsed: number;
+  dealMs: number;
+  viewMs: number;
+  /** 'dealing' = cards flying out; 'viewing' = everyone looks at their hand before bidding. */
+  stage: 'dealing' | 'viewing';
+  /** Whole seconds until bidding starts. */
+  secondsLeft: number;
+}
+
+/**
+ * Clock for the "cards are being dealt, then everyone looks at them" phase. Null in every other
+ * phase. Works from the server's timestamps, so a player who reconnects half way sees the right stage.
+ */
+export function useDealClock(view: RoomView | null): DealClock | null {
+  const g = view?.game ?? null;
+  const active = !!view && !!g && g.phase === 'dealing';
+  const dealMs = view?.dealMs ?? DEAL_MS;
+  const viewMs = view?.viewMs ?? VIEW_MS;
+  const dealAt = view?.dealAt ?? null;
+  const key = active ? `${g!.round}:${dealAt}` : '';
+
+  // Local clock time the deal started, fixed once per deal (corrects for clock skew via serverTime).
+  const startLocal = useMemo(() => {
+    if (!key || !view) return 0;
+    const already = dealAt !== null ? Math.max(0, view.serverTime - dealAt) : 0;
+    return Date.now() - already;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (!key) return;
+    const id = setInterval(() => tick((n) => n + 1), 50);
+    return () => clearInterval(id);
+  }, [key]);
+
+  if (!key) return null;
+  const elapsed = Math.max(0, Date.now() - startLocal);
+  const stage = elapsed < dealMs ? 'dealing' : 'viewing';
+  const secondsLeft = Math.max(0, Math.ceil((dealMs + viewMs - elapsed) / 1000));
+  return { elapsed, dealMs, viewMs, stage, secondsLeft };
+}

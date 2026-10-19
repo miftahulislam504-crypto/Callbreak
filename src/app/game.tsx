@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Banner } from '@/components/kit';
 import { BidSheet } from '@/components/table/BidSheet';
 import { GameOverOverlay } from '@/components/table/GameOverOverlay';
-import { useTrickDisplay, useTurnTimer } from '@/components/table/hooks';
+import { useDealClock, useTrickDisplay, useTurnTimer } from '@/components/table/hooks';
 import { RoundEndOverlay } from '@/components/table/RoundEndOverlay';
 import { ScoreSheet } from '@/components/table/ScoreSheet';
 import { Table } from '@/components/table/Table';
@@ -28,6 +28,7 @@ export default function Game() {
   const game = view?.game ?? null;
   const trick = useTrickDisplay(game);
   const turnTimer = useTurnTimer(view);
+  const dealClock = useDealClock(view);
   const [scores, setScores] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -56,7 +57,11 @@ export default function Game() {
       { text: t('leave'), style: 'destructive', onPress: () => void leaveRoom() },
     ]);
 
-  const status = !live
+  const status = dealClock
+    ? dealClock.stage === 'dealing'
+      ? t('dealingCards')
+      : t('lookAtCards', { s: dealClock.secondsLeft })
+    : !live
     ? ''
     : game.phase === 'bidding'
       ? myTurn ? t('chooseBid') : t('turnOf', { name: view.seats[game.turn]?.name ?? '' })
@@ -74,6 +79,7 @@ export default function Game() {
           shown={trick.shown}
           sweepTo={trick.sweepTo}
           turnTimer={turnTimer}
+          dealClock={dealClock}
           status={status}
           myTurn={myTurn && !showBidSheet}
           toast={toast}

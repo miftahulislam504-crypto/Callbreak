@@ -17,16 +17,19 @@ export const handCardWidth = (areaH: number) => Math.round(Math.min(72, Math.max
 export const handVisibleHeight = (areaH: number) => handCardWidth(areaH) * CARD_RATIO * (1 - HAND_SINK) + HAND_LIFT;
 
 function HandCard({
-  card, index, x, rot, arc, selected, dimmed, cardW, onPress,
+  card, index, x, rot, arc, selected, dimmed, cardW, hidden, instant, onPress,
 }: {
   card: Card; index: number; x: number; rot: number; arc: number; selected: boolean;
-  dimmed: boolean; cardW: number; onPress: () => void;
+  dimmed: boolean; cardW: number; hidden: boolean; instant: boolean; onPress: () => void;
 }) {
   const px = useSharedValue(x);
   const pr = useSharedValue(rot);
   const pa = useSharedValue(arc);
   const lift = useSharedValue(0);
   const deal = useSharedValue(0);
+  const flip = useSharedValue(1);
+  // Face down while the cards are still being dealt; turned over one after another afterwards.
+  const [faceDown, setFaceDown] = useState(hidden);
 
   useEffect(() => {
     px.set(withTiming(x, { duration: 180 }));
@@ -37,8 +40,27 @@ function HandCard({
     lift.set(withSpring(selected ? -HAND_LIFT : 0, { damping: 16, stiffness: 220 }));
   }, [selected, lift]);
   useEffect(() => {
-    deal.set(withDelay(index * 35, withTiming(1, { duration: 260, easing: Easing.out(Easing.cubic) })));
+    deal.set(withDelay(instant ? 0 : index * 35, withTiming(1, { duration: instant ? 140 : 260, easing: Easing.out(Easing.cubic) })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, deal]);
+  useEffect(() => {
+    if (hidden) {
+      setFaceDown(true);
+      return;
+    }
+    if (!faceDown) return;
+    const wait = index * 30;
+    const t1 = setTimeout(() => flip.set(withTiming(0, { duration: 110 })), wait);
+    const t2 = setTimeout(() => {
+      setFaceDown(false);
+      flip.set(withTiming(1, { duration: 150 }));
+    }, wait + 110);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hidden]);
 
   const style = useAnimatedStyle(() => ({
     opacity: deal.get(),
@@ -46,13 +68,14 @@ function HandCard({
       { translateX: px.get() },
       { translateY: pa.get() + lift.get() - (1 - deal.get()) * 60 },
       { rotate: `${pr.get()}deg` },
+      { scaleX: flip.get() },
     ],
   }));
 
   return (
     <Animated.View style={[{ position: 'absolute', left: 0, top: HAND_LIFT + 4 }, style]}>
       <Pressable onPress={onPress} hitSlop={2}>
-        <PlayingCard card={card} width={cardW} dimmed={dimmed} glow={selected} />
+        <PlayingCard card={card} faceDown={faceDown} width={cardW} dimmed={dimmed} glow={selected} />
       </Pressable>
     </Animated.View>
   );
@@ -63,11 +86,15 @@ function HandCard({
  * dimmed: tap a card to raise it, tap it again to play it.
  */
 export function Hand({
-  cards, legal, canPlay, onPlay, onIllegal, areaW, areaH, leftInset = 0, rightInset = 0,
+  cards, legal, canPlay, onPlay, onIllegal, areaW, areaH, leftInset = 0, rightInset = 0, hidden = false, instant = false,
 }: {
   cards: Card[]; legal: Card[]; canPlay: boolean;
   onPlay: (c: Card) => void; onIllegal: () => void;
   areaW: number; areaH: number; leftInset?: number; rightInset?: number;
+  /** Show the backs of the cards (while they are still being dealt). */
+  hidden?: boolean;
+  /** Cards appear at once instead of staggered (used while the deal animation runs). */
+  instant?: boolean;
 }) {
   const cardW = handCardWidth(areaH);
   const cardH = cardW * CARD_RATIO;
@@ -113,6 +140,8 @@ export function Hand({
             selected={active === key(c)}
             dimmed={canPlay && !isLegal(c)}
             cardW={cardW}
+            hidden={hidden}
+            instant={instant}
             onPress={() => press(c)}
           />
         );

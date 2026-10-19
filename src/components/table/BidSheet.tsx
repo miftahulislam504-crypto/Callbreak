@@ -76,6 +76,7 @@ export function BidSheet({ game, onBid, t }: { game: GameView; onBid: (n: number
             <Text style={{ color: GOLD, fontSize: 16 }}>♣ ♦</Text>
           </View>
           <Text style={{ color: MUTED, fontSize: 12.5 }}>{t('bidHint')}</Text>
+          <Text style={{ color: MUTED, fontSize: 11.5, opacity: 0.85 }}>{t('bidRuleHint')}</Text>
         </View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap, justifyContent: 'center' }}>
           {bids.map((b, i) => (
