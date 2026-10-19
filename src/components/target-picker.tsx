@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Chip, Field, Row } from '@/components/kit';
-import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { MUTED } from '@/constants/palette';
 import { LIMITS } from '@/lib/env';
 import { useT } from '@/lib/i18n';
 
@@ -18,9 +17,9 @@ export function TargetPicker({ value, onChange }: { value: number; onChange: (n:
   const valid = Number.isInteger(n) && n >= LIMITS.minTarget && n <= LIMITS.maxTarget;
 
   return (
-    <View style={{ gap: Spacing.two }}>
-      <ThemedText type="small" themeColor="textSecondary">{t('targetScore')}</ThemedText>
-      <Row style={{ flexWrap: 'wrap' }}>
+    <View style={{ gap: 8 }}>
+      <Text style={{ color: MUTED, fontSize: 12.5, fontWeight: '600' }}>{t('targetScore')}</Text>
+      <Row style={{ flexWrap: 'wrap', gap: 6 }}>
         {PRESETS.map((p) => (
           <Chip
             key={p}
@@ -49,9 +48,7 @@ export function TargetPicker({ value, onChange }: { value: number; onChange: (n:
             }}
           />
           {text !== '' && !valid ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('targetRange', { min: LIMITS.minTarget, max: LIMITS.maxTarget })}
-            </ThemedText>
+            <Text style={{ color: MUTED, fontSize: 12.5 }}>{t('targetRange', { min: LIMITS.minTarget, max: LIMITS.maxTarget })}</Text>
           ) : null}
         </>
       ) : null}

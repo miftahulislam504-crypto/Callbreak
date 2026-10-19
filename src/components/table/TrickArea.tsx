@@ -15,7 +15,8 @@ const DIR = [
   { x: 1, y: 0 },
 ];
 
-export const trickAreaSize = (cardW: number) => ({ w: cardW * 3.1, h: cardW * CARD_RATIO * 1.9 });
+export const trickCardWidth = (areaH: number) => Math.round(Math.min(50, Math.max(34, areaH * 0.125)));
+export const trickAreaSize = (cardW: number) => ({ w: cardW * 3.6, h: cardW * CARD_RATIO * 2 });
 
 function TrickCard({
   card, rel, sweepRel, cardW,
@@ -32,15 +33,16 @@ function TrickCard({
     if (sweepRel !== null) out.set(withTiming(1, { duration: 340, easing: Easing.in(Easing.quad) }));
   }, [sweepRel, out]);
 
+  // Landscape cross, like a real table: left/right cards sit beside the middle, top/bottom overlap a little.
   const d = DIR[rel];
-  const slotX = d.x * cardW * 0.72;
-  const slotY = d.y * cardH * 0.5;
-  const fromX = d.x * w * 0.9;
-  const fromY = d.y * h * 1.2;
+  const slotX = d.x * cardW * 1.08;
+  const slotY = d.y * cardH * 0.46;
+  const fromX = d.x * w * 1.1;
+  const fromY = d.y * h * 1.3;
   const sd = sweepRel === null ? { x: 0, y: 0 } : DIR[sweepRel];
-  const sweepX = sd.x * w * 1.1;
-  const sweepY = sd.y * h * 1.4;
-  const tilt = ((rel * 37 + card.rank * 11) % 9) - 4; // stable little rotation per card
+  const sweepX = sd.x * w * 1.6;
+  const sweepY = sd.y * h * 1.6;
+  const tilt = ((rel * 37 + card.rank * 11) % 7) - 3; // stable little rotation per card
 
   const style = useAnimatedStyle(() => {
     const e = enter.get();
@@ -51,7 +53,7 @@ function TrickCard({
         { translateX: slotX + (1 - e) * fromX + o * sweepX },
         { translateY: slotY + (1 - e) * fromY + o * sweepY },
         { rotate: `${tilt}deg` },
-        { scale: 1.12 - 0.12 * e },
+        { scale: 1.15 - 0.15 * e },
       ],
     };
   });
@@ -69,7 +71,7 @@ export function TrickArea({
   const { w, h } = trickAreaSize(cardW);
   const relOf = (seat: number) => (seat - mySeat + 4) % 4;
   return (
-    <View style={{ width: w, height: h }}>
+    <View style={{ width: w, height: h }} pointerEvents="none">
       {shown.map((s) => (
         <TrickCard
           key={s.key}

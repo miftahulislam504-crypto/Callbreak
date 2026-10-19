@@ -1,5 +1,6 @@
-import AppTabs from '@/components/app-tabs';
+import { Stack } from 'expo-router';
 
-export default function TabsLayout() {
-  return <AppTabs />;
+// Landscape-only game: no bottom tabs. Home has a profile button in its header instead.
+export default function MenuLayout() {
+  return <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: '#06241A' } }} />;
 }

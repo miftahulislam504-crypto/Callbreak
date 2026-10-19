@@ -1,11 +1,11 @@
-import { Redirect, useFocusEffect } from 'expo-router';
+import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, Switch, View } from 'react-native';
+import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Banner, Button, Card, Field, Row, Screen } from '@/components/kit';
+import { Avatar, Banner, Button, Card, CardTitle, Field, MenuBackdrop, Row } from '@/components/kit';
 import { TargetPicker } from '@/components/target-picker';
-import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { BG_DEEP, CREAM, GOLD, LINE, MUTED } from '@/constants/palette';
 import { fetchPublicRooms } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { LIMITS } from '@/lib/env';
@@ -49,73 +49,131 @@ export default function Home() {
   // Created, joined or resumed a room: go to it.
   if (view) return <Redirect href={view.status === 'lobby' ? '/lobby' : '/game'} />;
 
+  const name = profile?.name ?? '';
+  const col = { flex: 1, minWidth: 0 } as const;
+  const colContent = { gap: 12, paddingBottom: 14 } as const;
+
   return (
-    <Screen tabs onRefresh={load} refreshing={refreshing}>
-      <ThemedText type="subtitle">{t('hello', { name: profile?.name ?? '' })}</ThemedText>
-      {server === 'waking' ? <Banner tone="info" text={t('serverWaking')} /> : null}
-      {notice === 'roomLost' ? <Banner text={t('roomLost')} onClose={clearNotice} /> : null}
-      {error ? <Banner text={errorText(t, error)} onClose={clearError} /> : null}
+    <SafeAreaView style={{ flex: 1, backgroundColor: BG_DEEP }}>
+      <MenuBackdrop />
 
-      <Card>
-        <ThemedText type="smallBold">{t('quickMatch')}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">{t('quickHint')}</ThemedText>
-        <TargetPicker value={quickTarget} onChange={setQuickTarget} />
-        <Button title={t('findMatch')} onPress={() => void quickMatch(quickTarget)} loading={busy} />
-      </Card>
-
-      <Card>
-        <ThemedText type="smallBold">{t('createRoom')}</ThemedText>
-        <Field label={t('roomNameOpt')} value={roomName} onChangeText={setRoomName} maxLength={LIMITS.maxName} />
-        <Row style={{ justifyContent: 'space-between' }}>
-          <View style={{ flex: 1 }}>
-            <ThemedText type="smallBold">{t('privateRoom')}</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">{t('privateHint')}</ThemedText>
+      {/* Header: who you are, and the way to the profile */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 }}>
+        <Row style={{ gap: 12 }}>
+          <Avatar name={name || '?'} size={44} />
+          <View>
+            <Text style={{ color: CREAM, fontSize: 22, fontWeight: '800' }}>{t('hello', { name })}</Text>
+            <Text style={{ color: MUTED, fontSize: 12.5 }}>{t('welcomeBack')}</Text>
           </View>
-          <Switch value={isPrivate} onValueChange={setIsPrivate} />
         </Row>
-        <TargetPicker value={target} onChange={setTarget} />
-        <Button
-          title={t('create')}
-          onPress={() => void createRoom({ roomName: roomName.trim() || undefined, isPrivate, targetScore: target })}
-          loading={busy}
-        />
-      </Card>
+        <Row style={{ gap: 10 }}>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={{ color: GOLD, fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>♠ {t('appName')}</Text>
+          </View>
+          <Pressable
+            onPress={() => router.push('/profile')}
+            hitSlop={8}
+            style={({ pressed }) => ({
+              paddingHorizontal: 14, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center',
+              backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: LINE, opacity: pressed ? 0.7 : 1,
+            })}>
+            <Text style={{ color: CREAM, fontWeight: '800', fontSize: 13.5 }}>⚙ {t('tabProfile')}</Text>
+          </Pressable>
+        </Row>
+      </View>
 
-      <Card>
-        <ThemedText type="smallBold">{t('joinById')}</ThemedText>
-        <Field
-          value={code}
-          onChangeText={(s) => setCode(s.replace(/[^a-zA-Z0-9]/g, '').toUpperCase())}
-          placeholder={t('roomIdPh')}
-          autoCapitalize="characters"
-          autoCorrect={false}
-          maxLength={6}
-        />
-        <Button title={t('join')} onPress={() => void joinRoom(code)} disabled={code.length !== 6} loading={busy} />
-      </Card>
+      <View style={{ paddingHorizontal: 16, gap: 8 }}>
+        {server === 'waking' ? <Banner tone="info" text={t('serverWaking')} /> : null}
+        {notice === 'roomLost' ? <Banner text={t('roomLost')} onClose={clearNotice} /> : null}
+        {error ? <Banner text={errorText(t, error)} onClose={clearError} /> : null}
+      </View>
 
-      <Card>
-        <ThemedText type="smallBold">{t('publicRooms')}</ThemedText>
-        {roomsFailed ? <ThemedText type="small" themeColor="textSecondary">{t('roomsLoadFail')}</ThemedText> : null}
-        {!roomsFailed && rooms && rooms.length === 0 ? (
-          <ThemedText type="small" themeColor="textSecondary">{t('noPublicRooms')}</ThemedText>
-        ) : null}
-        {(rooms ?? []).map((r) => (
-          <Pressable key={r.roomCode} onPress={() => void joinRoom(r.roomCode)} disabled={busy}>
+      {/* Three columns so everything fits a landscape screen without long scrolling */}
+      <View style={{ flex: 1, flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingTop: 4 }}>
+        <ScrollView style={col} contentContainerStyle={colContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <Card style={{ backgroundColor: '#12573C', borderColor: 'rgba(242,193,78,0.35)' }}>
+            <CardTitle icon="⚡" title={t('quickMatch')} hint={t('quickHint')} />
+            <TargetPicker value={quickTarget} onChange={setQuickTarget} />
+            <Button title={t('findMatch')} variant="gold" onPress={() => void quickMatch(quickTarget)} loading={busy} />
+          </Card>
+          <Card>
+            <CardTitle icon="🔑" title={t('joinById')} />
+            <Field
+              value={code}
+              onChangeText={(s) => setCode(s.replace(/[^a-zA-Z0-9]/g, '').toUpperCase())}
+              placeholder={t('roomIdPh')}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={6}
+              style={{ letterSpacing: 4, fontWeight: '800', fontSize: 18 }}
+            />
+            <Button title={t('join')} variant="secondary" onPress={() => void joinRoom(code)} disabled={code.length !== 6} loading={busy} />
+          </Card>
+        </ScrollView>
+
+        <ScrollView style={col} contentContainerStyle={colContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <Card>
+            <CardTitle icon="♣" title={t('createRoom')} />
+            <Field label={t('roomNameOpt')} value={roomName} onChangeText={setRoomName} maxLength={LIMITS.maxName} />
             <Row style={{ justifyContent: 'space-between' }}>
               <View style={{ flex: 1 }}>
-                <ThemedText type="smallBold">{r.name}</ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {r.host} · {t('targetScore')} {r.targetScore}
-                </ThemedText>
+                <Text style={{ color: CREAM, fontWeight: '800', fontSize: 14 }}>{t('privateRoom')}</Text>
+                <Text style={{ color: MUTED, fontSize: 12 }}>{t('privateHint')}</Text>
               </View>
-              <ThemedText type="small">{t('playersCount', { n: r.clients })}</ThemedText>
+              <Switch
+                value={isPrivate}
+                onValueChange={setIsPrivate}
+                trackColor={{ false: 'rgba(255,255,255,0.18)', true: GOLD }}
+                thumbColor="#fff"
+              />
             </Row>
-          </Pressable>
-        ))}
-        <Button title="↻" variant="secondary" onPress={() => void load()} loading={refreshing} />
-      </Card>
-      <View style={{ height: Spacing.two }} />
-    </Screen>
+            <TargetPicker value={target} onChange={setTarget} />
+            <Button
+              title={t('create')}
+              onPress={() => void createRoom({ roomName: roomName.trim() || undefined, isPrivate, targetScore: target })}
+              loading={busy}
+            />
+          </Card>
+        </ScrollView>
+
+        <View style={col}>
+          <Card style={{ flex: 1 }}>
+            <Row style={{ justifyContent: 'space-between' }}>
+              <CardTitle icon="♥" title={t('publicRooms')} />
+              <Pressable onPress={() => void load()} hitSlop={8} disabled={refreshing}>
+                <Text style={{ color: GOLD, fontSize: 20, fontWeight: '800', opacity: refreshing ? 0.4 : 1 }}>↻</Text>
+              </Pressable>
+            </Row>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {roomsFailed ? <Text style={{ color: MUTED, fontSize: 13 }}>{t('roomsLoadFail')}</Text> : null}
+              {!roomsFailed && rooms && rooms.length === 0 ? (
+                <View style={{ alignItems: 'center', paddingVertical: 24, gap: 6 }}>
+                  <Text style={{ fontSize: 34, color: 'rgba(255,255,255,0.18)' }}>♠</Text>
+                  <Text style={{ color: MUTED, fontSize: 13, textAlign: 'center' }}>{t('noPublicRooms')}</Text>
+                </View>
+              ) : null}
+              {(rooms ?? []).map((r) => (
+                <Pressable
+                  key={r.roomCode}
+                  onPress={() => void joinRoom(r.roomCode)}
+                  disabled={busy}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 12,
+                    backgroundColor: pressed ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.22)', borderWidth: 1, borderColor: LINE,
+                  })}>
+                  <View style={{ flex: 1 }}>
+                    <Text numberOfLines={1} style={{ color: CREAM, fontWeight: '800', fontSize: 14 }}>{r.name}</Text>
+                    <Text numberOfLines={1} style={{ color: MUTED, fontSize: 12 }}>{r.host} · {t('targetScore')} {r.targetScore}</Text>
+                  </View>
+                  <View style={{ backgroundColor: 'rgba(242,193,78,0.16)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 }}>
+                    <Text style={{ color: GOLD, fontWeight: '800', fontSize: 12.5 }}>{t('playersCount', { n: r.clients })}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </Card>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }

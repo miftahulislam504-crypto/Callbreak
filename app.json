@@ -3,10 +3,10 @@
     "name": "Call Break",
     "slug": "callbreak-app",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "landscape",
     "icon": "./assets/images/icon.png",
     "scheme": "callbreakapp",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "ios": {
       "icon": "./assets/expo.icon"
     },
@@ -29,7 +29,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#06241A",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
@@ -48,15 +48,9 @@
       "reactCompiler": true
     },
     "extra": {
-      "router": {
-        "asyncRoutes": {
-          "web": true
-        }
-      },
       "eas": {
-        "projectId": "651567a7-9b6a-4aca-bb03-e167073ded04"
+        "projectId": "YOUR_PROJECT_ID"
       }
-    },
-    "owner": "miftahul99"
+    }
   }
 }

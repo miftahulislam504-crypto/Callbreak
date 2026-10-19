@@ -1,7 +1,7 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { AppState, useColorScheme } from 'react-native';
+import { AppState } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/lib/auth';
@@ -27,7 +27,7 @@ function Gate() {
 
   if (status === 'loading') return null;
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#06241A' } }}>
       <Stack.Protected guard={status === 'in'}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="lobby" options={{ gestureEnabled: false }} />
@@ -41,9 +41,8 @@ function Gate() {
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={DarkTheme}>
       <AuthProvider>
         <AnimatedSplashOverlay />
         <Gate />

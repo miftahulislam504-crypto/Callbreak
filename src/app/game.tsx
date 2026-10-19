@@ -11,11 +11,16 @@ import { useTrickDisplay, useTurnTimer } from '@/components/table/hooks';
 import { RoundEndOverlay } from '@/components/table/RoundEndOverlay';
 import { ScoreSheet } from '@/components/table/ScoreSheet';
 import { Table } from '@/components/table/Table';
-import { FELT_DARK, GOLD } from '@/constants/palette';
+import { CREAM, GOLD } from '@/constants/palette';
 import { hapticTurn } from '@/lib/haptics';
 import { errorText, useT } from '@/lib/i18n';
 import type { Card } from '@/lib/types';
 import { useRoom } from '@/state/room';
+
+const chip = {
+  paddingHorizontal: 12, height: 32, borderRadius: 16, alignItems: 'center' as const, justifyContent: 'center' as const,
+  backgroundColor: 'rgba(20,12,4,0.62)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+};
 
 export default function Game() {
   const t = useT();
@@ -53,35 +58,15 @@ export default function Game() {
 
   const status = !live
     ? ''
-    : myTurn
-      ? game.phase === 'bidding' ? t('chooseBid') : t('yourTurn')
-      : t('turnOf', { name: view.seats[game.turn]?.name ?? '' });
+    : game.phase === 'bidding'
+      ? myTurn ? t('chooseBid') : t('turnOf', { name: view.seats[game.turn]?.name ?? '' })
+      : myTurn ? t('yourTurn') : t('turnOf', { name: view.seats[game.turn]?.name ?? '' });
+
+  const showBidSheet = game.phase === 'bidding' && myTurn;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: FELT_DARK }}>
-      <StatusBar style="light" />
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8 }}>
-        <View>
-          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>{t('roundN', { n: game.round })}</Text>
-          <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>{t('targetReach', { n: game.targetScore })}</Text>
-        </View>
-        <Text style={{ color: myTurn ? GOLD : 'rgba(255,255,255,0.85)', fontWeight: '700', flexShrink: 1, textAlign: 'center', paddingHorizontal: 8 }} numberOfLines={1}>
-          {status}
-        </Text>
-        <View style={{ flexDirection: 'row', gap: 14 }}>
-          <Pressable onPress={() => setScores(true)} hitSlop={8}>
-            <Text style={{ color: '#fff', fontWeight: '700' }}>{t('scoreSheet')}</Text>
-          </Pressable>
-          <Pressable onPress={confirmLeave} hitSlop={8}>
-            <Text style={{ color: '#FF8A8F', fontWeight: '700' }}>{t('leave')}</Text>
-          </Pressable>
-        </View>
-      </View>
-
-      {link === 'reconnecting' ? <Banner text={t('reconnecting')} /> : null}
-      {error ? <Banner text={errorText(t, error)} onClose={clearError} /> : null}
-
+    <SafeAreaView edges={['left', 'right']} style={{ flex: 1, backgroundColor: '#5A3718' }}>
+      <StatusBar hidden />
       <View style={{ flex: 1 }}>
         <Table
           view={view}
@@ -89,29 +74,50 @@ export default function Game() {
           shown={trick.shown}
           sweepTo={trick.sweepTo}
           turnTimer={turnTimer}
+          status={status}
+          myTurn={myTurn && !showBidSheet}
+          toast={toast}
           onPlay={(c: Card) => send('play', { suit: c.suit, rank: c.rank })}
           onIllegal={() => setToast(t('cardNotAllowed'))}
           t={t}
         />
-        {game.phase === 'bidding' && myTurn ? <BidSheet game={game} onBid={(n) => send('bid', { bid: n })} t={t} /> : null}
-        {toast ? (
-          <View pointerEvents="none" style={{ position: 'absolute', left: 20, right: 20, bottom: 190, backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: 12, padding: 12 }}>
-            <Text style={{ color: '#fff', textAlign: 'center' }}>{toast}</Text>
+
+        {/* Header overlay: round + target on the left, actions on the right */}
+        <View pointerEvents="box-none" style={{ position: 'absolute', top: 6, left: 10, right: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View style={[chip, { height: 44, alignItems: 'flex-start', paddingVertical: 4 }]}>
+            <Text style={{ color: GOLD, fontWeight: '900', fontSize: 14 }}>{t('roundN', { n: game.round })}</Text>
+            <Text style={{ color: 'rgba(246,241,227,0.8)', fontSize: 11 }}>{t('targetReach', { n: game.targetScore })}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={() => setScores(true)} hitSlop={6} style={chip}>
+              <Text style={{ color: CREAM, fontWeight: '800', fontSize: 13 }}>{t('scoreSheet')}</Text>
+            </Pressable>
+            <Pressable onPress={confirmLeave} hitSlop={6} style={[chip, { backgroundColor: 'rgba(160,30,36,0.7)' }]}>
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>{t('leave')}</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {link === 'reconnecting' || error ? (
+          <View style={{ position: 'absolute', top: 6, left: '28%', right: '28%', zIndex: 20 }}>
+            {link === 'reconnecting' ? <Banner text={t('reconnecting')} /> : null}
+            {error ? <Banner text={errorText(t, error)} onClose={clearError} /> : null}
           </View>
         ) : null}
-      </View>
 
-      {game.phase === 'roundEnd' && trick.idle ? <RoundEndOverlay view={view} game={game} t={t} /> : null}
-      {game.phase === 'finished' && trick.idle ? (
-        <GameOverOverlay
-          view={view}
-          game={game}
-          t={t}
-          onRematch={() => send('rematch')}
-          onScores={() => setScores(true)}
-          onLeave={() => void leaveRoom()}
-        />
-      ) : null}
+        {showBidSheet ? <BidSheet game={game} onBid={(n) => send('bid', { bid: n })} t={t} /> : null}
+        {game.phase === 'roundEnd' && trick.idle ? <RoundEndOverlay view={view} game={game} t={t} /> : null}
+        {game.phase === 'finished' && trick.idle ? (
+          <GameOverOverlay
+            view={view}
+            game={game}
+            t={t}
+            onRematch={() => send('rematch')}
+            onScores={() => setScores(true)}
+            onLeave={() => void leaveRoom()}
+          />
+        ) : null}
+      </View>
 
       <ScoreSheet visible={scores} onClose={() => setScores(false)} view={view} game={game} t={t} />
     </SafeAreaView>
