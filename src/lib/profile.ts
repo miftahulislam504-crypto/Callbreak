@@ -1,12 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { deleteField, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 
 import { LIMITS, isFirebaseConfigured } from './env';
 import { getFirebase } from './firebase';
 
 export interface Profile {
   name: string;
+  /** Small JPEG data URI of the player's photo. null/undefined = show the coloured initial. */
+  avatar?: string | null;
 }
+
+/** Avatars are mini rectangles: width / height. The photo is cropped to this ratio. */
+export const AVATAR_RATIO = 0.8;
+export const avatarWidth = (height: number): number => Math.round(height * AVATAR_RATIO);
 
 export const AVATAR_COLORS = ['#E5484D', '#F76B15', '#D6A100', '#30A46C', '#12A594', '#3E63DD', '#8E4EC6', '#D6409F'];
 
@@ -34,8 +40,10 @@ export async function loadProfile(uid: string): Promise<Profile | null> {
       if (snap.exists()) {
         const name = snap.get('name');
         if (typeof name === 'string' && name) {
-          await AsyncStorage.setItem(localKey(uid), JSON.stringify({ name }));
-          return { name };
+          const avatar = snap.get('avatar');
+          const p: Profile = { name, avatar: typeof avatar === 'string' && avatar ? avatar : null };
+          await AsyncStorage.setItem(localKey(uid), JSON.stringify(p));
+          return p;
         }
       }
     } catch {
@@ -50,7 +58,10 @@ export async function saveProfile(uid: string, profile: Profile): Promise<void> 
   await AsyncStorage.setItem(localKey(uid), JSON.stringify(profile));
   if (isFirebaseConfigured) {
     try {
-      await setDoc(doc(getFirebase().db, 'users', uid), { name: profile.name, updatedAt: serverTimestamp() }, { merge: true });
+      const data: Record<string, unknown> = { name: profile.name, updatedAt: serverTimestamp() };
+      // undefined = leave the stored photo alone (e.g. a rename); null = remove it.
+      if (profile.avatar !== undefined) data.avatar = profile.avatar ? profile.avatar : deleteField();
+      await setDoc(doc(getFirebase().db, 'users', uid), data, { merge: true });
     } catch {
       // kept locally; will sync the next time the profile is saved
     }

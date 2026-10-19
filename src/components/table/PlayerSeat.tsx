@@ -5,6 +5,7 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTim
 import { Avatar } from '@/components/kit';
 import { CREAM, GOLD } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
+import { avatarWidth } from '@/lib/profile';
 import { fmtPts } from '@/lib/rules';
 
 import { PlayingCard } from './PlayingCard';
@@ -15,6 +16,8 @@ export type SeatSide = 'top' | 'left' | 'right' | 'me';
 export interface PlayerSeatProps {
   side: SeatSide;
   name: string;
+  /** Profile photo (data URI); null = coloured initial. */
+  avatar?: string | null;
   isMe: boolean;
   isBot: boolean;
   offline: boolean;
@@ -31,8 +34,10 @@ export interface PlayerSeatProps {
   t: T;
 }
 
-const AV = 42;
-const RING = 52;
+const AV = 42; // avatar height; it is a mini rectangle, so the width is smaller
+const AV_W = avatarWidth(AV);
+const RING_H = AV + 10;
+const RING_W = AV_W + 10;
 
 function TurnGlow({ active }: { active: boolean }) {
   const o = useSharedValue(0);
@@ -44,7 +49,7 @@ function TurnGlow({ active }: { active: boolean }) {
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ position: 'absolute', width: RING, height: RING, borderRadius: RING / 2, borderWidth: 3, borderColor: GOLD }, style]}
+      style={[{ position: 'absolute', width: RING_W, height: RING_H, borderRadius: 12, borderWidth: 3, borderColor: GOLD }, style]}
     />
   );
 }
@@ -85,11 +90,11 @@ function Identity(p: PlayerSeatProps) {
   const score = p.noBid ? `${p.won}` : `${p.won}/${p.bid ?? '–'}`;
   return (
     <View style={{ alignItems: 'center', gap: 3 }}>
-      <View style={{ width: RING, height: RING, alignItems: 'center', justifyContent: 'center', opacity: p.offline ? 0.55 : 1 }}>
+      <View style={{ width: RING_W, height: RING_H, alignItems: 'center', justifyContent: 'center', opacity: p.offline ? 0.55 : 1 }}>
         <TurnGlow active={p.isTurn} />
-        <Avatar name={p.name} size={AV} />
+        <Avatar name={p.name} uri={p.avatar} size={AV} />
         {p.isDealer ? (
-          <View style={{ position: 'absolute', right: -2, top: -2, width: 18, height: 18, borderRadius: 9, backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#7B4A24' }}>
+          <View style={{ position: 'absolute', right: -6, top: -4, width: 18, height: 18, borderRadius: 9, backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#7B4A24' }}>
             <Text style={{ color: '#3A2400', fontSize: 10, fontWeight: '900' }}>D</Text>
           </View>
         ) : null}

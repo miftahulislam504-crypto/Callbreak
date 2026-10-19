@@ -27,6 +27,12 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a profile photo that other players see at the table."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#06241A",

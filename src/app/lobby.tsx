@@ -8,11 +8,12 @@ import { Avatar, Banner, Button, Card, MenuBackdrop, PillButton, Row } from '@/c
 import { TargetPicker } from '@/components/target-picker';
 import { BG_DEEP, CREAM, GOLD, LINE, MUTED } from '@/constants/palette';
 import { errorText, useT } from '@/lib/i18n';
+import { avatarWidth } from '@/lib/profile';
 import { useRoom } from '@/state/room';
 
 export default function Lobby() {
   const t = useT();
-  const { view, link, error, send, leaveRoom, clearError } = useRoom();
+  const { view, avatars, link, error, send, leaveRoom, clearError } = useRoom();
   const [copied, setCopied] = useState(false);
 
   if (!view) return <Redirect href="/" />;
@@ -91,7 +92,7 @@ export default function Lobby() {
                 flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 14,
                 backgroundColor: s.occupied ? '#0F3F2C' : 'rgba(0,0,0,0.2)', borderWidth: 1, borderColor: LINE,
               }}>
-              {s.occupied ? <Avatar name={s.name} size={38} /> : <View style={{ width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.25)' }} />}
+              {s.occupied ? <Avatar name={s.name} uri={avatars[s.seat]} size={38} /> : <View style={{ width: avatarWidth(38), height: 38, borderRadius: 7, borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.25)' }} />}
               <View style={{ flex: 1 }}>
                 <Text numberOfLines={1} style={{ color: s.occupied ? CREAM : MUTED, fontWeight: '800', fontSize: 14.5 }}>
                   {s.occupied ? s.name : t('emptySeat')}

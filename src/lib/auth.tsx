@@ -19,6 +19,8 @@ interface AuthApi {
   local: boolean;
   signInGuest(name: string): Promise<void>;
   updateName(name: string): Promise<void>;
+  /** Set (data URI) or remove (null) the profile photo. */
+  updateAvatar(avatar: string | null): Promise<void>;
   signOut(): Promise<void>;
 }
 
@@ -30,20 +32,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [uid, setUid] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const pending = useRef<Profile | null>(null);
-  const me = useRef({ uid: null as string | null, name: 'Player' });
+  const me = useRef({ uid: null as string | null, name: 'Player', avatar: null as string | null });
 
   // The identity provider reads this ref when connecting; keep it current outside render.
   useEffect(() => {
-    me.current = { uid, name: profile?.name ?? 'Player' };
+    me.current = { uid, name: profile?.name ?? 'Player', avatar: profile?.avatar ?? null };
   }, [uid, profile]);
 
   useEffect(() => {
     void loadLang();
     setIdentityProvider(async () => {
-      const { uid: id, name } = me.current;
+      const { uid: id, name, avatar } = me.current;
       if (!id) throw Object.assign(new Error('not_signed_in'), { code: 'auth' });
       const user = isFirebaseConfigured ? getFirebase().auth.currentUser : null;
-      return { uid: id, name, idToken: user ? await user.getIdToken() : null };
+      return { uid: id, name, avatar, idToken: user ? await user.getIdToken() : null };
     });
 
     if (!isFirebaseConfigured) {
@@ -106,7 +108,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async updateName(rawName) {
         if (!uid) return;
-        const p: Profile = { name: cleanName(rawName, profile?.name ?? 'Player') };
+        const p: Profile = { ...profile, name: cleanName(rawName, profile?.name ?? 'Player') };
+        await saveProfile(uid, p);
+        setProfile(p);
+      },
+      async updateAvatar(avatar) {
+        if (!uid) return;
+        const p: Profile = { name: profile?.name ?? 'Player', avatar };
         await saveProfile(uid, p);
         setProfile(p);
       },

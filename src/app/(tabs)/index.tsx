@@ -51,7 +51,7 @@ export default function Home() {
       {/* Header: who you are, and the way to the profile */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 }}>
         <Row style={{ gap: 12 }}>
-          <Avatar name={name || '?'} size={44} />
+          <Avatar name={name || '?'} uri={profile?.avatar} size={44} />
           <View>
             <Text style={{ color: CREAM, fontSize: 22, fontWeight: '800' }}>{t('hello', { name })}</Text>
             <Text style={{ color: MUTED, fontSize: 12.5 }}>{t('welcomeBack')}</Text>

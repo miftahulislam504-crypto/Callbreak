@@ -9,6 +9,8 @@ const TOKEN_KEY = 'cb.reconnect';
 export interface Identity {
   uid: string;
   name: string;
+  /** Profile photo (small JPEG data URI) shown on the table and in the lobby. */
+  avatar?: string | null;
   /** Firebase ID token; null in local-guest mode (server must be in dev mode). */
   idToken: string | null;
 }
@@ -21,6 +23,8 @@ export interface KeyValueStorage {
 
 export interface Listeners {
   onState(view: RoomView): void;
+  /** Photos per seat (null = no photo), sent only when they change. */
+  onAvatars?(avatars: (string | null)[]): void;
   onError(error: ServerError): void;
   onLink(link: 'online' | 'reconnecting'): void;
   /** The room is gone for us: we left on purpose, or the seat was lost. */
@@ -55,7 +59,13 @@ export class GameConnection {
 
   private async joinOptions(extra: Record<string, unknown> = {}) {
     const id = await this.opts.getIdentity();
-    return { name: id.name, uid: id.uid, ...(id.idToken ? { idToken: id.idToken } : {}), ...extra };
+    return {
+      name: id.name,
+      uid: id.uid,
+      ...(id.avatar ? { avatar: id.avatar } : {}),
+      ...(id.idToken ? { idToken: id.idToken } : {}),
+      ...extra,
+    };
   }
 
   async create(o: CreateOptions): Promise<void> {
@@ -133,6 +143,9 @@ export class GameConnection {
     this.leaving = false;
     const L = this.opts.listeners;
     room.onMessage('state', (v: RoomView) => L.onState(v));
+    room.onMessage('avatars', (m: { avatars?: unknown }) => {
+      if (Array.isArray(m?.avatars)) L.onAvatars?.(m.avatars.map((a) => (typeof a === 'string' && a ? a : null)));
+    });
     room.onMessage('error', (e: ServerError) => L.onError(e));
     room.onDrop(() => L.onLink('reconnecting'));
     room.onReconnect(() => {

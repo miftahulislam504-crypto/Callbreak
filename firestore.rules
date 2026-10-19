@@ -5,10 +5,13 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['name', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['name', 'updatedAt', 'avatar'])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 20;
+        && request.resource.data.name.size() <= 20
+        // Optional profile photo: a small JPEG data URI (the app sends ~96x120 px, a few KB).
+        && (!('avatar' in request.resource.data)
+            || (request.resource.data.avatar is string && request.resource.data.avatar.size() <= 16000));
     }
   }
 }

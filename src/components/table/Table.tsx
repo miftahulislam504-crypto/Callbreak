@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 
 import { CREAM, GOLD, WOOD, WOOD_LINE } from '@/constants/palette';
 import { isNoBidRound } from '@/lib/rules';
+import { useRoom } from '@/state/room';
 import type { T } from '@/lib/i18n';
 import type { ShownCard } from '@/lib/trickPlayer';
 import type { Card, GameView, RoomView } from '@/lib/types';
@@ -47,6 +48,7 @@ export function Table({
   status: string; myTurn: boolean; toast: string | null;
   onPlay: (c: Card) => void; onIllegal: () => void; t: T;
 }) {
+  const avatars = useRoom((s) => s.avatars);
   const [size, setSize] = useState({ w: 800, h: 360 });
   const { w, h } = size;
   const me = view.mySeat;
@@ -75,6 +77,7 @@ export function Table({
       <PlayerSeat
         side={side}
         name={s.name}
+        avatar={avatars[i] ?? null}
         isMe={rel === 0}
         isBot={s.isBot}
         offline={s.occupied && !s.isBot && !s.connected}

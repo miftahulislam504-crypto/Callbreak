@@ -8,7 +8,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ACCENT, ACCENT_DARK, BG_DEEP, CREAM, DANGER, GOLD, GOLD_DEEP, LINE, MUTED, PANEL, PANEL_HI } from '@/constants/palette';
 import { Spacing } from '@/constants/theme';
-import { avatarColor } from '@/lib/profile';
+import { Image } from 'expo-image';
+
+import { avatarColor, avatarWidth } from '@/lib/profile';
 
 /** Faint big suit symbols behind menu screens, so they are not flat black/green. */
 export function MenuBackdrop() {
@@ -124,15 +126,26 @@ export function Banner({ text, onClose, tone = 'error' }: { text: string; onClos
   );
 }
 
-export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
+/**
+ * Mini rectangular avatar (portrait, rounded corners). Shows the player's photo when there is one,
+ * otherwise their coloured initial. `size` is the height; the width follows AVATAR_RATIO.
+ */
+export function Avatar({ name, size = 40, uri }: { name: string; size?: number; uri?: string | null }) {
   const initial = (Array.from(name.trim())[0] ?? '?').toUpperCase();
+  const w = avatarWidth(size);
+  const border = Math.max(1.5, size * 0.05);
   return (
     <View
       style={{
-        width: size, height: size, borderRadius: size / 2, backgroundColor: avatarColor(name),
-        alignItems: 'center', justifyContent: 'center', borderWidth: Math.max(1.5, size * 0.05), borderColor: 'rgba(255,255,255,0.55)',
+        width: w, height: size, borderRadius: Math.round(size * 0.18), backgroundColor: avatarColor(name),
+        alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+        borderWidth: border, borderColor: 'rgba(255,255,255,0.55)',
       }}>
-      <Text style={{ color: '#fff', fontSize: size * 0.44, fontWeight: '800' }}>{initial}</Text>
+      {uri ? (
+        <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={120} />
+      ) : (
+        <Text style={{ color: '#fff', fontSize: size * 0.44, fontWeight: '800' }}>{initial}</Text>
+      )}
     </View>
   );
 }
