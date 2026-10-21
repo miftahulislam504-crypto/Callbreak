@@ -1,9 +1,13 @@
 import { create } from 'zustand';
 
 import type { VoiceDeniedReason, VoiceGrant, VoiceInfo } from '@/lib/types';
+import type { VoiceChoice } from '@/lib/voice/plan';
 
 /** Call Break always has 4 seats. */
 export const VOICE_SEATS = 4;
+
+/** A short one-off message for the voice button to show for a few seconds. */
+export type VoiceNotice = 'headphones' | 'mic_denied' | 'need_players' | 'failed';
 
 /** off = not in the voice channel, connecting = joining, on = in the channel, error = joining or staying failed. */
 export type VoiceStatus = 'off' | 'connecting' | 'on' | 'error';
@@ -14,8 +18,17 @@ interface VoiceState {
   grant: VoiceGrant | null;
   /** The server's latest "no" (why there is no token). Cleared by the next grant. */
   denied: VoiceDeniedReason | null;
+  /**
+   * What I asked for: 'default' follows the room (private rooms join by themselves, public rooms wait),
+   * 'on' / 'off' are my explicit taps. Cleared by reset().
+   */
+  choice: VoiceChoice;
   /** My microphone is live. Muted by default, and only ever true while status is 'on'. */
   micOn: boolean;
+  /** Bumped by retry(): the sync hook treats it as a fresh start (a new token, a new join). */
+  retryKey: number;
+  /** What the voice button should tell the player right now (it clears itself after a few seconds). */
+  notice: VoiceNotice | null;
   /** Per seat: that player is speaking right now. */
   speaking: boolean[];
   /**
@@ -28,6 +41,11 @@ interface VoiceState {
   receive(info: VoiceInfo): void;
   /** The audio side reports where it is. Leaving 'on' always switches the mic off and clears who is speaking. */
   setStatus(status: VoiceStatus): void;
+  /** Join (or stay out of) voice on purpose; the voice sync hook does the joining and leaving. */
+  setChoice(choice: VoiceChoice): void;
+  /** After a failed join: try again from scratch. */
+  retry(): void;
+  setNotice(notice: VoiceNotice | null): void;
   /** Ignored while not connected, so the mic can never be "on" without a call. */
   setMic(on: boolean): void;
   /** The seats that are speaking right now (from the engine's volume callback). Ignored while not connected. */
@@ -45,7 +63,10 @@ const initial = () => ({
   status: 'off' as VoiceStatus,
   grant: null as VoiceGrant | null,
   denied: null as VoiceDeniedReason | null,
+  choice: 'default' as VoiceChoice,
   micOn: false,
+  retryKey: 0,
+  notice: null as VoiceNotice | null,
   speaking: none(),
   mutedSeats: none(),
 });
@@ -72,6 +93,18 @@ export const useVoice = create<VoiceState>((set, get) => ({
       ...(status === 'off' ? { grant: null } : {}),
       ...(status !== 'on' ? { micOn: false, speaking: same(s.speaking, none()) ? s.speaking : none() } : {}),
     }));
+  },
+
+  setChoice(choice) {
+    if (get().choice !== choice) set({ choice });
+  },
+
+  retry() {
+    set((s) => ({ retryKey: s.retryKey + 1, status: 'off', grant: null, denied: null, notice: null, micOn: false, speaking: none() }));
+  },
+
+  setNotice(notice) {
+    if (get().notice !== notice) set({ notice });
   },
 
   setMic(on) {
