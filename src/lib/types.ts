@@ -94,3 +94,28 @@ export interface ServerError {
   code: string;
   message: string;
 }
+
+/** Why the server gave no voice token (the `reason` of a refused `voice` message). */
+export type VoiceDeniedReason = 'disabled' | 'not_seated' | 'rate_limited';
+
+/** The server's "yes": everything needed to join the voice channel. */
+export interface VoiceGrant {
+  enabled: true;
+  appId: string;
+  /** Agora channel: "cb-<roomCode>". */
+  channel: string;
+  /** Agora uid: seat + 1 (1..4), so "who is speaking" maps straight to a seat. */
+  uid: number;
+  token: string;
+  /** Epoch ms when the token stops working. */
+  expiresAt: number;
+}
+
+/** The server's "no". */
+export interface VoiceDenied {
+  enabled: false;
+  reason: VoiceDeniedReason;
+}
+
+/** The server's answer to `voiceToken` (the `voice` message). */
+export type VoiceInfo = VoiceGrant | VoiceDenied;

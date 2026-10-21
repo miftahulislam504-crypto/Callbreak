@@ -1,10 +1,32 @@
 // Framework-free wrapper around the Colyseus client (no React Native imports, so it can be
 // exercised from Node: see scripts/smoke.ts).
 import { Client, type Room } from '@colyseus/sdk';
-import type { RoomView, ServerError } from './types';
+import type { RoomView, ServerError, VoiceDeniedReason, VoiceInfo } from './types';
 
 const ROOM_NAME = 'callbreak';
 const TOKEN_KEY = 'cb.reconnect';
+const VOICE_REASONS: readonly VoiceDeniedReason[] = ['disabled', 'not_seated', 'rate_limited'];
+
+/**
+ * Turns a raw `voice` message into a VoiceInfo. Anything that is not a complete grant
+ * (a missing token, a wrong type, an unknown reason) counts as "voice is not available",
+ * so a bad message can never start a half-configured voice session.
+ */
+export function parseVoice(raw: unknown): VoiceInfo {
+  const m = (raw ?? {}) as Record<string, unknown>;
+  const { appId, channel, token, uid, expiresAt } = m;
+  if (
+    m.enabled === true &&
+    typeof appId === 'string' && appId &&
+    typeof channel === 'string' && channel &&
+    typeof token === 'string' && token &&
+    typeof uid === 'number' && Number.isInteger(uid) && uid >= 1 && // 0 would mean "Agora picks a uid", which breaks seat mapping
+    typeof expiresAt === 'number' && Number.isFinite(expiresAt)
+  ) {
+    return { enabled: true, appId, channel, uid, token, expiresAt };
+  }
+  return { enabled: false, reason: VOICE_REASONS.find((r) => r === m.reason) ?? 'disabled' };
+}
 
 export interface Identity {
   uid: string;
@@ -26,6 +48,8 @@ export interface Listeners {
   /** Photos per seat (null = no photo), sent only when they change. */
   onAvatars?(avatars: (string | null)[]): void;
   onError(error: ServerError): void;
+  /** The server's answer to `requestVoice()`: a token to join with, or why there is none. */
+  onVoice?(info: VoiceInfo): void;
   onLink(link: 'online' | 'reconnecting'): void;
   /** The room is gone for us: we left on purpose, or the seat was lost. */
   onClosed(reason: 'left' | 'lost'): void;
@@ -120,6 +144,21 @@ export class GameConnection {
     this.room?.send(type, payload);
   }
 
+  /**
+   * Asks the server for a voice token; the answer arrives through `onVoice`.
+   * Returns false when there is no room to ask in (or the socket is already gone).
+   */
+  requestVoice(): boolean {
+    const room = this.room;
+    if (!room) return false;
+    try {
+      room.send('voiceToken');
+      return true;
+    } catch {
+      return false; // the SDK's own reconnect takes over
+    }
+  }
+
   async leave(): Promise<void> {
     const room = this.room;
     if (!room) return;
@@ -147,6 +186,7 @@ export class GameConnection {
       if (Array.isArray(m?.avatars)) L.onAvatars?.(m.avatars.map((a) => (typeof a === 'string' && a ? a : null)));
     });
     room.onMessage('error', (e: ServerError) => L.onError(e));
+    room.onMessage('voice', (m: unknown) => L.onVoice?.(parseVoice(m)));
     room.onDrop(() => L.onLink('reconnecting'));
     room.onReconnect(() => {
       L.onLink('online');

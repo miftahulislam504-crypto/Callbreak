@@ -1,11 +1,16 @@
 // Runs the app's GameConnection against a real, dev-mode server.
-//   server:  cd callbreak-server && PORT=2599 npx tsx src/server.ts
+//   server:  cd callbreak-server && CB_FAST=1 PORT=2599 npx tsx src/server.ts   (CB_FAST: no 60 s look-at-cards wait)
 //   this:    cd callbreak-server && SERVER=ws://localhost:2599 npx tsx ../callbreak-app/scripts/smoke.ts
+// Voice: without Agora keys the server answers `voiceToken` with "disabled", and that is checked too.
+// To check the token path, start the server with AGORA_APP_ID and AGORA_APP_CERTIFICATE (any 32-hex pair
+// gives a well-formed token; only real keys make Agora accept it) and add EXPECT_VOICE=on to this command.
+// EXPECT_VOICE=off requires "disabled"; unset accepts either.
 import assert from 'node:assert/strict';
 import { GameConnection, type KeyValueStorage } from '../src/lib/gameClient';
-import type { RoomView } from '../src/lib/types';
+import type { RoomView, VoiceInfo } from '../src/lib/types';
 
 const URL = process.env.SERVER ?? 'ws://localhost:2599';
+const EXPECT_VOICE = process.env.EXPECT_VOICE; // 'on' | 'off' | unset
 
 function memStorage(): KeyValueStorage & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -19,7 +24,7 @@ function memStorage(): KeyValueStorage & { data: Map<string, string> } {
 
 function player(name: string, url: string = URL) {
   const storage = memStorage();
-  const state: { view: RoomView | null; errors: string[]; closed: string[] } = { view: null, errors: [], closed: [] };
+  const state: { view: RoomView | null; errors: string[]; closed: string[]; voice: VoiceInfo[] } = { view: null, errors: [], closed: [], voice: [] };
   const conn = new GameConnection({
     url,
     storage,
@@ -27,6 +32,7 @@ function player(name: string, url: string = URL) {
     listeners: {
       onState: (v) => (state.view = v),
       onError: (e) => state.errors.push(e.code),
+      onVoice: (v) => state.voice.push(v),
       onLink: () => {},
       onClosed: (r) => state.closed.push(r),
     },
@@ -68,8 +74,34 @@ async function main() {
   a.conn.send('setTarget', { targetScore: 49 });
   await until(() => b.state.view?.targetScore === 49, 'target synced to guest');
 
+  // voice: every `voiceToken` gets exactly one `voice` answer, and it never disturbs the lobby
+  assert.equal(a.conn.requestVoice(), true);
+  await until(() => a.state.voice.length === 1, 'voice answer for the host');
+  const va = a.state.voice[0];
+  if (va.enabled) {
+    assert.equal(va.channel, `cb-${code}`);
+    assert.equal(va.uid, a.state.view!.mySeat + 1, 'uid = seat + 1');
+    assert.ok(va.appId.length > 0 && va.token.length > 0, 'grant carries an app id and a token');
+    assert.ok(va.expiresAt > Date.now(), 'token is not already expired');
+    a.conn.requestVoice(); // asking again right away is rate-limited
+    await until(() => a.state.voice.length === 2, 'second voice answer');
+    assert.deepEqual(a.state.voice[1], { enabled: false, reason: 'rate_limited' });
+    b.conn.requestVoice(); // the limit is per client, and the guest sits in another seat
+    await until(() => b.state.voice.length === 1, 'voice answer for the guest');
+    const vb = b.state.voice[0];
+    if (!vb.enabled) throw new Error(`guest got no voice token: ${vb.reason}`);
+    assert.equal(vb.uid, b.state.view!.mySeat + 1);
+    assert.notEqual(vb.uid, va.uid);
+  } else {
+    assert.equal(va.reason, 'disabled');
+  }
+  if (EXPECT_VOICE === 'on') assert.ok(va.enabled, 'EXPECT_VOICE=on, but the server has voice disabled');
+  if (EXPECT_VOICE === 'off') assert.ok(!va.enabled, 'EXPECT_VOICE=off, but the server issued a token');
+  console.log(`smoke: voice ${va.enabled ? 'enabled (token issued)' : `disabled (${va.reason})`}`);
+
   a.conn.send('start', { fillBots: true });
-  await until(() => b.state.view?.status === 'bidding' && b.state.view.game !== null, 'game started');
+  // Round 1 has no bidding (CB_NO_BID_ROUNDS), so the first status after dealing is 'playing', not 'bidding'.
+  await until(() => (b.state.view?.status === 'bidding' || b.state.view?.status === 'playing') && b.state.view.game !== null, 'game started');
   assert.equal(b.state.view!.game!.myHand.length, 13);
   assert.equal(b.state.view!.game!.targetScore, 49);
 
@@ -87,6 +119,7 @@ async function main() {
   // coming back to the foreground: a connected client refreshes; one with nothing to resume says so
   assert.equal(await a.conn.onForeground(), 'in-room');
   assert.equal(await player('Dave').conn.onForeground(), 'none');
+  assert.equal(player('Frank').conn.requestVoice(), false, 'no room, nothing to ask');
 
   // an unreachable server (still asleep) keeps the token so a later resume can work
   const eve = player('Eve', 'ws://localhost:1');

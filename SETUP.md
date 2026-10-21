@@ -61,9 +61,8 @@ npx eas-cli build -p android --profile preview
 
 ## 5. ফোন ছাড়া দ্রুত যাচাই
 ```
-cd callbreak-server && PORT=2599 npx tsx src/server.ts
+cd callbreak-server && CB_FAST=1 PORT=2599 npx tsx src/server.ts     # আলাদা terminal-এ (smoke আর playthrough দুটোর জন্যই CB_FAST=1 লাগে), তারপর:
 cd callbreak-server && SERVER=ws://localhost:2599 npx tsx ../callbreak-app/scripts/smoke.ts
-cd callbreak-server && CB_FAST=1 PORT=2599 npx tsx src/server.ts     # আলাদা terminal-এ, তারপর:
 cd callbreak-server && SERVER=ws://localhost:2599 npx tsx ../callbreak-app/scripts/playthrough.ts
 npm test
 ```
