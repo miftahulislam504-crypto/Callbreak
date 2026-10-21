@@ -201,4 +201,52 @@ describe('useVoice', () => {
     assert.deepEqual(s().mutedSeats, [false, false, false, false]);
     assert.equal(s().status, 'off');
   });
+
+  test('the sound route is remembered while in voice and forgotten when voice ends, retries or resets', () => {
+    assert.equal(s().route, 'unknown');
+    s().receive(grant);
+    s().setStatus('on');
+    s().setRoute('bluetooth');
+    assert.equal(s().route, 'bluetooth');
+    s().setStatus('error'); // e.g. the connection was lost
+    assert.equal(s().route, 'unknown');
+
+    s().setStatus('on');
+    s().setRoute('speaker');
+    s().retry();
+    assert.equal(s().route, 'unknown');
+
+    s().receive(grant);
+    s().setStatus('on');
+    s().setRoute('headset');
+    s().reset();
+    assert.equal(s().route, 'unknown');
+  });
+
+  test('renewal: a newer token replaces the grant, a refusal is recorded, and the call stays up the whole time', () => {
+    s().receive(grant);
+    s().setStatus('on');
+    s().setMic(true);
+
+    s().receive({ enabled: false, reason: 'rate_limited' });
+    assert.equal(s().status, 'on');
+    assert.equal(s().denied, 'rate_limited');
+    assert.equal(s().micOn, true);
+
+    const renewed = { ...grant, token: '007renewed', expiresAt: grant.expiresAt + 3_600_000 };
+    s().receive(renewed);
+    assert.equal(s().status, 'on');
+    assert.equal(s().denied, null);
+    assert.deepEqual(s().grant, renewed);
+    assert.equal(s().micOn, true);
+  });
+
+  test('the new notices (network, service, session_ended, reconnecting) are plain messages like the others', () => {
+    for (const n of ['network', 'service', 'session_ended', 'reconnecting'] as const) {
+      s().setNotice(n);
+      assert.equal(s().notice, n);
+    }
+    s().setNotice(null);
+    assert.equal(s().notice, null);
+  });
 });

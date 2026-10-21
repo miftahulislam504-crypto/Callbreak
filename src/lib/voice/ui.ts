@@ -3,7 +3,7 @@ import type { RoomView } from '../types';
 import { connectedHumans, MIN_VOICE_HUMANS, voicePlan, type VoiceChoice } from './plan';
 
 /**
- * hidden      voice cannot exist here (Expo Go, web) or there is no room
+ * hidden      voice cannot exist here (Expo Go, web, or the server has voice switched off) or there is no room
  * disabled    not enough human players yet; a tap explains why
  * join        voice is off; a tap turns it on
  * connecting  joining
@@ -28,9 +28,12 @@ export function voiceButtonState(i: VoiceButtonInput): VoiceButtonState {
   if (i.status === 'on') return i.micOn ? 'live' : 'muted';
   if (i.status === 'connecting') return 'connecting';
   if (connectedHumans(i.view) < MIN_VOICE_HUMANS) return 'disabled';
-  // Off, but the room wants voice and the token is on its way (or was just refused): not a "join" tap yet.
+  // The server has voice switched off (kill switch, no keys): there is nothing to tap, and the game goes on without the button.
+  if (i.denied === 'disabled') return 'hidden';
+  // Off, but the room wants voice and the token is on its way (or was refused for asking too fast and is
+  // being asked again by itself): not a "join" tap yet.
   const wants = voicePlan({ view: i.view, choice: i.choice, away: false, available: i.available }) === 'join';
-  if (wants && i.denied === null) return 'connecting';
+  if (wants && (i.denied === null || i.denied === 'rate_limited')) return 'connecting';
   return 'join';
 }
 

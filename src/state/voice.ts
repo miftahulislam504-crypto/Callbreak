@@ -2,12 +2,21 @@ import { create } from 'zustand';
 
 import type { VoiceDeniedReason, VoiceGrant, VoiceInfo } from '@/lib/types';
 import type { VoiceChoice } from '@/lib/voice/plan';
+import type { AudioRouteKind } from '@/lib/voice/route';
 
 /** Call Break always has 4 seats. */
 export const VOICE_SEATS = 4;
 
 /** A short one-off message for the voice button to show for a few seconds. */
-export type VoiceNotice = 'headphones' | 'mic_denied' | 'need_players' | 'failed';
+export type VoiceNotice =
+  | 'headphones'
+  | 'mic_denied'
+  | 'need_players'
+  | 'failed'
+  | 'network' //      the connection is gone for good
+  | 'service' //      the voice service refused us or is switched off
+  | 'session_ended' // the token ran out and could not be renewed
+  | 'reconnecting'; // the SDK lost the connection and is trying to get it back
 
 /** off = not in the voice channel, connecting = joining, on = in the channel, error = joining or staying failed. */
 export type VoiceStatus = 'off' | 'connecting' | 'on' | 'error';
@@ -29,6 +38,8 @@ interface VoiceState {
   retryKey: number;
   /** What the voice button should tell the player right now (it clears itself after a few seconds). */
   notice: VoiceNotice | null;
+  /** Where the sound goes now (speaker, headset, Bluetooth, ...). Only meaningful while status is 'on'. */
+  route: AudioRouteKind;
   /** Per seat: that player is speaking right now. */
   speaking: boolean[];
   /**
@@ -46,6 +57,7 @@ interface VoiceState {
   /** After a failed join: try again from scratch. */
   retry(): void;
   setNotice(notice: VoiceNotice | null): void;
+  setRoute(route: AudioRouteKind): void;
   /** Ignored while not connected, so the mic can never be "on" without a call. */
   setMic(on: boolean): void;
   /** The seats that are speaking right now (from the engine's volume callback). Ignored while not connected. */
@@ -67,6 +79,7 @@ const initial = () => ({
   micOn: false,
   retryKey: 0,
   notice: null as VoiceNotice | null,
+  route: 'unknown' as AudioRouteKind,
   speaking: none(),
   mutedSeats: none(),
 });
@@ -83,7 +96,7 @@ export const useVoice = create<VoiceState>((set, get) => ({
       // the token we joined with stays valid until it expires.
       set({ denied: info.reason });
     } else {
-      set({ grant: null, denied: info.reason, status: 'off', micOn: false, speaking: none() });
+      set({ grant: null, denied: info.reason, status: 'off', micOn: false, route: 'unknown', speaking: none() });
     }
   },
 
@@ -91,7 +104,7 @@ export const useVoice = create<VoiceState>((set, get) => ({
     set((s) => ({
       status,
       ...(status === 'off' ? { grant: null } : {}),
-      ...(status !== 'on' ? { micOn: false, speaking: same(s.speaking, none()) ? s.speaking : none() } : {}),
+      ...(status !== 'on' ? { micOn: false, route: 'unknown' as AudioRouteKind, speaking: same(s.speaking, none()) ? s.speaking : none() } : {}),
     }));
   },
 
@@ -100,11 +113,15 @@ export const useVoice = create<VoiceState>((set, get) => ({
   },
 
   retry() {
-    set((s) => ({ retryKey: s.retryKey + 1, status: 'off', grant: null, denied: null, notice: null, micOn: false, speaking: none() }));
+    set((s) => ({ retryKey: s.retryKey + 1, status: 'off', grant: null, denied: null, notice: null, micOn: false, route: 'unknown' as AudioRouteKind, speaking: none() }));
   },
 
   setNotice(notice) {
     if (get().notice !== notice) set({ notice });
+  },
+
+  setRoute(route) {
+    if (get().route !== route) set({ route });
   },
 
   setMic(on) {

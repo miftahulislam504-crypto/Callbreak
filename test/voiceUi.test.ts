@@ -68,8 +68,13 @@ describe('voiceButtonState', () => {
     assert.equal(state({ view: publicTwo, choice: 'on' }), 'connecting');
   });
 
-  test('the server refused the token: back to a join button instead of spinning forever', () => {
-    assert.equal(state({ denied: 'disabled' }), 'join');
+  test('the server has voice switched off: no button at all, and nothing spins forever', () => {
+    assert.equal(state({ denied: 'disabled' }), 'hidden');
+    assert.equal(state({ view: publicTwo, choice: 'on', denied: 'disabled' }), 'hidden');
+  });
+
+  test('asked too fast: it is asked again by itself, so it reads as connecting', () => {
+    assert.equal(state({ denied: 'rate_limited' }), 'connecting');
   });
 });
 

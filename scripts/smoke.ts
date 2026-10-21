@@ -11,6 +11,8 @@ import type { RoomView, VoiceInfo } from '../src/lib/types';
 
 const URL = process.env.SERVER ?? 'ws://localhost:2599';
 const EXPECT_VOICE = process.env.EXPECT_VOICE; // 'on' | 'off' | unset
+/** The server's CB_VOICE_TOKEN_MIN_GAP_MS (default 5000): how long to wait before asking for a renewal. */
+const VOICE_GAP_MS = Number(process.env.CB_VOICE_TOKEN_MIN_GAP_MS ?? 5000);
 
 function memStorage(): KeyValueStorage & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -92,6 +94,17 @@ async function main() {
     if (!vb.enabled) throw new Error(`guest got no voice token: ${vb.reason}`);
     assert.equal(vb.uid, b.state.view!.mySeat + 1);
     assert.notEqual(vb.uid, va.uid);
+
+    // renewal: once the server's gap has passed, the same seat gets a fresh grant for the same channel and uid
+    // (the app asks about 5 minutes before the token expires and hands the new token to the SDK).
+    await new Promise((r) => setTimeout(r, VOICE_GAP_MS + 300));
+    assert.equal(a.conn.requestVoice(), true);
+    await until(() => a.state.voice.length === 3, 'renewed voice token for the host');
+    const vr = a.state.voice[2];
+    if (!vr.enabled) throw new Error(`renewal refused: ${vr.reason}`);
+    assert.equal(vr.channel, va.channel);
+    assert.equal(vr.uid, va.uid);
+    assert.ok(vr.expiresAt >= va.expiresAt, 'the renewed token does not expire earlier');
   } else {
     assert.equal(va.reason, 'disabled');
   }

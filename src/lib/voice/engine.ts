@@ -12,6 +12,8 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import type { IRtcEngine, IRtcEngineEventHandler } from 'react-native-agora';
 
 import type { VoiceGrant } from '@/lib/types';
+import { classifyFailure, type VoiceFailureKind } from './failure';
+import { audioRouteKind, type AudioRouteKind } from './route';
 import { createSpeakingTracker, type SpeakingTracker } from './speaking';
 
 type AgoraSdk = typeof import('react-native-agora');
@@ -20,7 +22,15 @@ export interface VoiceEvents {
   /** In the channel (also fires again when the SDK reconnects after a network blip). */
   onJoined(): void;
   /** The session is over and the engine has already left: the join failed or the connection is gone for good. */
-  onFailed(reason: string): void;
+  onFailed(kind: VoiceFailureKind, reason: string): void;
+  /** The connection dropped and the SDK is trying to get it back (it keeps trying for a while). */
+  onReconnecting(): void;
+  /** The token runs out in about 30 seconds: ask the server for a new one now. */
+  onTokenWillExpire(): void;
+  /** The token has already run out: renew it, or let the session end. */
+  onTokenExpired(): void;
+  /** The sound now goes to a different place (speaker, headset, Bluetooth, ...). */
+  onRoute(route: AudioRouteKind): void;
   /** Agora uids (1..4 = seat + 1) that are speaking now. Includes me only while my mic is live. */
   onSpeaking(uids: number[]): void;
 }
@@ -50,6 +60,8 @@ let engine: IRtcEngine | null = null;
 let engineAppId = '';
 let session: Session | null = null;
 let micSeq = 0;
+/** Where the sound goes, as last reported by the SDK. */
+let route: AudioRouteKind = 'unknown';
 
 function loadSdk(): AgoraSdk | null {
   if (sdk !== undefined) return sdk;
@@ -82,16 +94,43 @@ const handler: IRtcEngineEventHandler = {
     sessionOf(connection)?.events.onJoined();
   },
 
-  onConnectionStateChanged(connection, state) {
+  onConnectionStateChanged(connection, state, reason) {
     const s = sessionOf(connection);
     const sdkRef = loadSdk();
     if (!s || !sdkRef) return;
     if (state === sdkRef.ConnectionStateType.ConnectionStateConnected) {
       s.events.onJoined();
+    } else if (state === sdkRef.ConnectionStateType.ConnectionStateReconnecting) {
+      s.events.onReconnecting(); // the SDK keeps retrying by itself; this is only so the player can be told
     } else if (state === sdkRef.ConnectionStateType.ConnectionStateFailed) {
-      // Includes an expired or invalid token. (Reconnecting is left to the SDK, which keeps retrying.)
-      fail(s, 'connection failed');
+      // Includes an expired or invalid token, a banned or rejected user and a lost connection.
+      fail(s, classifyFailure(Number(reason)), `connection failed (reason ${String(reason)})`);
     }
+  },
+
+  onTokenPrivilegeWillExpire(connection) {
+    sessionOf(connection)?.events.onTokenWillExpire();
+  },
+
+  onRequestToken(connection) {
+    sessionOf(connection)?.events.onTokenExpired();
+  },
+
+  onRenewTokenResult(connection, _token, code) {
+    const s = sessionOf(connection);
+    const sdkRef = loadSdk();
+    if (!s || !sdkRef) return;
+    const R = sdkRef.RenewTokenErrorCode;
+    // Only a definite refusal ends the session. A plain failure or a request replaced by a newer one is
+    // not fatal: the old token is still good, and the SDK's "will expire" callback asks for another.
+    if (code === R.RenewTokenTokenExpired || code === R.RenewTokenInvalidToken || code === R.RenewTokenInvalidChannelName || code === R.RenewTokenInconsistentAppid) {
+      fail(s, 'token', `renew refused (code ${String(code)})`);
+    }
+  },
+
+  onAudioRoutingChanged(routing) {
+    route = audioRouteKind(routing);
+    session?.events.onRoute(route);
   },
 
   onAudioVolumeIndication(connection, speakers) {
@@ -117,10 +156,10 @@ const handler: IRtcEngineEventHandler = {
   },
 };
 
-function fail(s: Session, reason: string): void {
+function fail(s: Session, kind: VoiceFailureKind, reason: string): void {
   if (session !== s) return;
   leaveVoice();
-  s.events.onFailed(reason);
+  s.events.onFailed(kind, reason);
 }
 
 function ensureEngine(agora: AgoraSdk, appId: string): IRtcEngine {
@@ -176,6 +215,7 @@ export function joinVoice(grant: VoiceGrant, events: VoiceEvents): boolean {
       }, SPEAKING_TICK_MS),
     };
     session = s;
+    route = 'unknown';
 
     e.enableAudio();
     e.enableLocalAudio(false); // no capture (and no permission needed) until the first unmute
@@ -198,6 +238,31 @@ export function joinVoice(grant: VoiceGrant, events: VoiceEvents): boolean {
   }
 }
 
+/** Where the sound goes right now ('unknown' until the SDK has said). */
+export function currentAudioRoute(): AudioRouteKind {
+  return route;
+}
+
+/**
+ * Hands the SDK a fresh token for the channel we are already in (no rejoin, no gap in the audio).
+ * False when there is nothing to renew: no session, another channel or seat, or the SDK refused to take it.
+ */
+export function renewVoiceToken(grant: VoiceGrant): boolean {
+  const s = session;
+  if (!s || !engine) return false;
+  if (grant.channel !== s.grant.channel || grant.uid !== s.grant.uid) return false;
+  if (grant.token === s.grant.token) return true; // this is the token we already use
+  try {
+    const rc = engine.renewToken(grant.token);
+    if (rc < 0) return false;
+    s.grant = grant;
+    return true;
+  } catch (err) {
+    console.warn(`[voice] renew failed: ${err instanceof Error ? err.message : String(err)}`);
+    return false;
+  }
+}
+
 /** Leaves the channel and stops everything. Safe to call any time, any number of times. */
 export function leaveVoice(): void {
   const s = session;
@@ -212,12 +277,32 @@ export function leaveVoice(): void {
   }
 }
 
+/**
+ * Android 12+ only lets an app see a connected Bluetooth headset (and route sound to it) after the runtime
+ * permission "Nearby devices" (BLUETOOTH_CONNECT). Asked together with the microphone, because that is the
+ * moment the player starts talking; a refusal is fine: the sound then simply stays on the phone.
+ */
+async function ensureBluetoothPermission(): Promise<void> {
+  if (Platform.OS !== 'android' || Number(Platform.Version) < 31) return;
+  try {
+    const permission = PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT;
+    if (!(await PermissionsAndroid.check(permission))) await PermissionsAndroid.request(permission);
+  } catch {
+    // best effort
+  }
+}
+
 async function ensureMicPermission(): Promise<boolean> {
   // iOS asks by itself the first time capture starts (NSMicrophoneUsageDescription in app.json).
   if (Platform.OS !== 'android') return true;
   const permission = PermissionsAndroid.PERMISSIONS.RECORD_AUDIO;
-  if (await PermissionsAndroid.check(permission)) return true;
-  return (await PermissionsAndroid.request(permission)) === PermissionsAndroid.RESULTS.GRANTED;
+  if (await PermissionsAndroid.check(permission)) {
+    await ensureBluetoothPermission();
+    return true;
+  }
+  const granted = (await PermissionsAndroid.request(permission)) === PermissionsAndroid.RESULTS.GRANTED;
+  if (granted) await ensureBluetoothPermission();
+  return granted;
 }
 
 /** Turns my microphone on or off. The permission is asked on the first "on". */
