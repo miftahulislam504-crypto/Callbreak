@@ -7,6 +7,7 @@ import { SERVER_URL } from '@/lib/env';
 import { GameConnection, type CreateOptions } from '@/lib/gameClient';
 import { getIdentity } from '@/lib/session';
 import type { RoomView } from '@/lib/types';
+import { useVoice } from '@/state/voice';
 
 interface RoomState {
   view: RoomView | null;
@@ -29,6 +30,8 @@ interface RoomState {
   foreground(): Promise<void>;
   clearNotice(): void;
   send(type: string, payload?: unknown): void;
+  /** Asks the server for a voice token; the answer lands in useVoice. False when there is no room to ask in. */
+  requestVoice(): boolean;
   leaveRoom(): Promise<void>;
   clearError(): void;
 }
@@ -43,8 +46,12 @@ export const useRoom = create<RoomState>((set, get) => {
       onState: (view) => set({ view }),
       onAvatars: (avatars) => set({ avatars }),
       onError: (e) => set({ error: { code: e.code, message: e.message } }),
+      onVoice: (info) => useVoice.getState().receive(info),
       onLink: (link) => set({ link }),
-      onClosed: (reason) => set({ view: null, avatars: [], link: 'online', ...(reason === 'lost' ? { notice: 'roomLost' as const } : {}) }),
+      onClosed: (reason) => {
+        useVoice.getState().reset();
+        set({ view: null, avatars: [], link: 'online', ...(reason === 'lost' ? { notice: 'roomLost' as const } : {}) });
+      },
     },
   });
 
@@ -109,8 +116,10 @@ export const useRoom = create<RoomState>((set, get) => {
     },
     clearNotice: () => set({ notice: null }),
     send: (type, payload) => conn.send(type, payload),
+    requestVoice: () => conn.requestVoice(),
     async leaveRoom() {
       await conn.leave();
+      useVoice.getState().reset();
       set({ view: null, link: 'online' });
     },
     clearError: () => set({ error: null }),
