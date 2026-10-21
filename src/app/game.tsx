@@ -11,6 +11,7 @@ import { useDealClock, useTrickDisplay, useTurnTimer } from '@/components/table/
 import { RoundEndOverlay } from '@/components/table/RoundEndOverlay';
 import { ScoreSheet } from '@/components/table/ScoreSheet';
 import { Table } from '@/components/table/Table';
+import { VoiceButton } from '@/components/table/VoiceButton';
 import { CREAM, GOLD } from '@/constants/palette';
 import { hapticTurn } from '@/lib/haptics';
 import { errorText, useT } from '@/lib/i18n';
@@ -101,6 +102,7 @@ export default function Game() {
             <Text style={{ color: 'rgba(246,241,227,0.8)', fontSize: 11 }}>{t('targetReach', { n: game.targetScore })}</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
+            <VoiceButton variant="table" />
             <Pressable onPress={() => setScores(true)} hitSlop={6} style={chip}>
               <Text style={{ color: CREAM, fontWeight: '800', fontSize: 13 }}>{t('scoreSheet')}</Text>
             </Pressable>

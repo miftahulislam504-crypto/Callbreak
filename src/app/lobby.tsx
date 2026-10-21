@@ -6,15 +6,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar, Banner, Button, Card, MenuBackdrop, PillButton, Row } from '@/components/kit';
 import { TargetPicker } from '@/components/target-picker';
-import { BG_DEEP, CREAM, GOLD, LINE, MUTED } from '@/constants/palette';
+import { SeatMuteButton, VoiceButton } from '@/components/table/VoiceButton';
+import { BG_DEEP, CREAM, GOLD, GREEN_OK, LINE, MUTED } from '@/constants/palette';
 import { errorText, useT } from '@/lib/i18n';
 import { avatarWidth } from '@/lib/profile';
 import { useRoom } from '@/state/room';
+import { useVoice } from '@/state/voice';
 
 export default function Lobby() {
   const t = useT();
   const { view, avatars, link, error, send, leaveRoom, clearError } = useRoom();
   const [copied, setCopied] = useState(false);
+  const speaking = useVoice((s) => s.speaking);
+  const voiceOn = useVoice((s) => s.status === 'on');
 
   if (!view) return <Redirect href="/" />;
   if (view.status !== 'lobby') return <Redirect href="/game" />;
@@ -38,7 +42,10 @@ export default function Lobby() {
             {view.isPrivate ? t('privateBadge') : t('publicBadge')} · {t('targetScore')} {view.targetScore}
           </Text>
         </View>
-        <PillButton label={t('leave')} tone="danger" onPress={() => void leaveRoom()} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <VoiceButton variant="menu" />
+          <PillButton label={t('leave')} tone="danger" onPress={() => void leaveRoom()} />
+        </View>
       </View>
 
       <View style={{ paddingHorizontal: 16, gap: 6 }}>
@@ -92,7 +99,11 @@ export default function Lobby() {
                 flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 14,
                 backgroundColor: s.occupied ? '#0F3F2C' : 'rgba(0,0,0,0.2)', borderWidth: 1, borderColor: LINE,
               }}>
-              {s.occupied ? <Avatar name={s.name} uri={avatars[s.seat]} size={38} /> : <View style={{ width: avatarWidth(38), height: 38, borderRadius: 7, borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.25)' }} />}
+              {s.occupied ? (
+                <View style={{ padding: 2, borderRadius: 9, borderWidth: 2.5, borderColor: voiceOn && speaking[s.seat] ? GREEN_OK : 'transparent' }}>
+                  <Avatar name={s.name} uri={avatars[s.seat]} size={38} />
+                </View>
+              ) : <View style={{ width: avatarWidth(38), height: 38, borderRadius: 7, borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.25)' }} />}
               <View style={{ flex: 1 }}>
                 <Text numberOfLines={1} style={{ color: s.occupied ? CREAM : MUTED, fontWeight: '800', fontSize: 14.5 }}>
                   {s.occupied ? s.name : t('emptySeat')}
@@ -106,6 +117,7 @@ export default function Lobby() {
                   ].filter(Boolean).join(' · ')}
                 </Text>
               </View>
+              <SeatMuteButton seat={s.seat} />
               {isHost && s.isBot ? <Button title={t('removeBot')} variant="secondary" compact onPress={() => send('removeBot', { seat: s.seat })} /> : null}
             </View>
           ))}

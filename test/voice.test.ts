@@ -61,8 +61,47 @@ describe('useVoice', () => {
     assert.equal(s().micOn, false);
     assert.equal(s().grant, null);
     assert.equal(s().denied, null);
+    assert.equal(s().choice, 'default');
     assert.deepEqual(s().speaking, [false, false, false, false]);
     assert.deepEqual(s().mutedSeats, [false, false, false, false]);
+  });
+
+  test('retry starts over: a new key, no grant, no old refusal or notice', () => {
+    s().receive(grant);
+    s().setStatus('error');
+    s().setNotice('failed');
+    const before = s().retryKey;
+    s().retry();
+    assert.equal(s().retryKey, before + 1);
+    assert.equal(s().status, 'off');
+    assert.equal(s().grant, null);
+    assert.equal(s().denied, null);
+    assert.equal(s().notice, null);
+  });
+
+  test('a notice is just a message: set, clear, and wiped by reset', () => {
+    s().setNotice('mic_denied');
+    assert.equal(s().notice, 'mic_denied');
+    s().setNotice(null);
+    assert.equal(s().notice, null);
+    s().setNotice('headphones');
+    s().reset();
+    assert.equal(s().notice, null);
+    assert.equal(s().retryKey, 0);
+  });
+
+  test('the player\'s choice is kept while voice reconnects and cleared by reset', () => {
+    s().setChoice('on');
+    assert.equal(s().choice, 'on');
+    s().receive(grant);
+    s().setStatus('on');
+    s().setStatus('off'); // e.g. app went to the background and came back
+    assert.equal(s().choice, 'on');
+
+    s().setChoice('off');
+    assert.equal(s().choice, 'off');
+    s().reset();
+    assert.equal(s().choice, 'default');
   });
 
   test('a grant starts connecting; a renewal while on keeps the status', () => {

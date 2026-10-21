@@ -5,6 +5,7 @@ import { AppState } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { useVoiceSync } from '@/lib/voice/useVoiceSync';
 import { useRoom } from '@/state/room';
 
 SplashScreen.preventAutoHideAsync();
@@ -13,6 +14,9 @@ function Gate() {
   const { status } = useAuth();
   const bootstrap = useRoom((s) => s.bootstrap);
   const foreground = useRoom((s) => s.foreground);
+
+  // Voice chat lives here (not on a screen) so it keeps running from the lobby into the game.
+  useVoiceSync();
 
   // Wake the server (free hosts sleep) and get back into the room we were in, then keep the
   // connection healthy whenever the app returns from the background.

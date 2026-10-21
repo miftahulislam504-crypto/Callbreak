@@ -1,9 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useEffect } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { Avatar } from '@/components/kit';
-import { CREAM, GOLD } from '@/constants/palette';
+import { CREAM, GOLD, GREEN_OK } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
 import { avatarWidth } from '@/lib/profile';
 import { fmtPts } from '@/lib/rules';
@@ -31,6 +32,12 @@ export interface PlayerSeatProps {
   handCount: number;
   total: number;
   timer: TurnTimer | null;
+  /** Voice chat: this player is speaking right now (green ring). */
+  speaking?: boolean;
+  /** Voice chat: I muted this player on my device (small badge). */
+  voiceMuted?: boolean;
+  /** Tap on the player (opens the mute menu). Leave out where it does not apply. */
+  onPress?: () => void;
   t: T;
 }
 
@@ -50,6 +57,21 @@ function TurnGlow({ active }: { active: boolean }) {
     <Animated.View
       pointerEvents="none"
       style={[{ position: 'absolute', width: RING_W, height: RING_H, borderRadius: 12, borderWidth: 3, borderColor: GOLD }, style]}
+    />
+  );
+}
+
+/** Green ring while the player is speaking. Sits just inside the gold turn ring, so both can show at once. */
+function SpeakRing({ active }: { active: boolean }) {
+  const o = useSharedValue(0);
+  useEffect(() => {
+    o.set(withTiming(active ? 1 : 0, { duration: active ? 90 : 220 }));
+  }, [active, o]);
+  const style = useAnimatedStyle(() => ({ opacity: o.get() }));
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[{ position: 'absolute', width: RING_W - 6, height: RING_H - 6, borderRadius: 9, borderWidth: 3, borderColor: GREEN_OK }, style]}
     />
   );
 }
@@ -89,10 +111,16 @@ function Identity(p: PlayerSeatProps) {
   const tags = [p.isBot ? p.t('bot') : '', p.auto ? p.t('badgeAuto') : '', p.offline ? p.t('offline') : ''].filter(Boolean);
   const score = p.noBid ? `${p.won}` : `${p.won}/${p.bid ?? '–'}`;
   return (
-    <View style={{ alignItems: 'center', gap: 3 }}>
+    <Pressable disabled={!p.onPress} onPress={p.onPress} hitSlop={4} style={{ alignItems: 'center', gap: 3 }}>
       <View style={{ width: RING_W, height: RING_H, alignItems: 'center', justifyContent: 'center', opacity: p.offline ? 0.55 : 1 }}>
         <TurnGlow active={p.isTurn} />
         <Avatar name={p.name} uri={p.avatar} size={AV} />
+        <SpeakRing active={!!p.speaking} />
+        {p.voiceMuted ? (
+          <View style={{ position: 'absolute', right: -4, bottom: -3, width: 18, height: 18, borderRadius: 9, backgroundColor: '#B3262D', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#3A0A0D' }}>
+            <Ionicons name="volume-mute" size={11} color="#fff" />
+          </View>
+        ) : null}
         {p.isDealer ? (
           <View style={{ position: 'absolute', right: -6, top: -4, width: 18, height: 18, borderRadius: 9, backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#7B4A24' }}>
             <Text style={{ color: '#3A2400', fontSize: 10, fontWeight: '900' }}>D</Text>
@@ -108,7 +136,7 @@ function Identity(p: PlayerSeatProps) {
       </View>
       {tags.length > 0 ? <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 9.5, fontWeight: '700', textShadowColor: '#000', textShadowRadius: 2 }}>{tags.join(' · ')}</Text> : null}
       {p.timer ? <TimerBar timer={p.timer} width={70} /> : null}
-    </View>
+    </Pressable>
   );
 }
 

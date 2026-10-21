@@ -1,9 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { CREAM, GOLD, WOOD, WOOD_LINE } from '@/constants/palette';
 import { isNoBidRound } from '@/lib/rules';
+import { canMuteSeat } from '@/lib/voice/ui';
 import { useRoom } from '@/state/room';
+import { useVoice } from '@/state/voice';
 import type { T } from '@/lib/i18n';
 import type { ShownCard } from '@/lib/trickPlayer';
 import type { Card, GameView, RoomView } from '@/lib/types';
@@ -35,6 +38,39 @@ function Wood() {
   );
 }
 
+/** Small popup next to a seat: mute or unmute that player (on this device only). Tap outside to close. */
+function MuteMenu({
+  name, rel, muted, w, h, onClose, onToggle, t,
+}: { name: string; rel: number; muted: boolean; w: number; h: number; onClose: () => void; onToggle: () => void; t: T }) {
+  const width = 200;
+  const pos = rel === 2
+    ? { left: (w - width) / 2, top: 108 } // across: under the top seat
+    : rel === 1
+      ? { left: 14, top: (h - 150) / 2 + 100 }
+      : { right: 14, top: (h - 150) / 2 + 100 };
+  return (
+    <>
+      <Pressable onPress={onClose} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 40 }} />
+      <View
+        style={{
+          position: 'absolute', width, zIndex: 41, borderRadius: 14, padding: 10, gap: 8, ...pos,
+          backgroundColor: '#0B2F21', borderWidth: 1.5, borderColor: GOLD,
+        }}>
+        <Text numberOfLines={1} style={{ color: CREAM, fontWeight: '800', fontSize: 13, textAlign: 'center' }}>{name}</Text>
+        <Pressable
+          onPress={onToggle}
+          style={({ pressed }) => ({
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 38, borderRadius: 19,
+            backgroundColor: muted ? 'rgba(52,195,143,0.25)' : 'rgba(229,72,77,0.25)', opacity: pressed ? 0.75 : 1,
+          })}>
+          <Ionicons name={muted ? 'volume-high' : 'volume-mute'} size={18} color={CREAM} />
+          <Text style={{ color: CREAM, fontWeight: '800', fontSize: 13.5 }}>{muted ? t('unmutePlayer') : t('mutePlayer')}</Text>
+        </Pressable>
+      </View>
+    </>
+  );
+}
+
 /**
  * Landscape table: opponents at the top, left and right, the trick in a cross in the middle,
  * your seat bottom-left and your hand fanned along the bottom edge.
@@ -49,6 +85,10 @@ export function Table({
   onPlay: (c: Card) => void; onIllegal: () => void; t: T;
 }) {
   const avatars = useRoom((s) => s.avatars);
+  const voiceOn = useVoice((s) => s.status === 'on');
+  const speaking = useVoice((s) => s.speaking);
+  const mutedSeats = useVoice((s) => s.mutedSeats);
+  const [menuSeat, setMenuSeat] = useState<number | null>(null);
   const [size, setSize] = useState({ w: 800, h: 360 });
   const { w, h } = size;
   const me = view.mySeat;
@@ -90,6 +130,9 @@ export function Table({
         handCount={dealtTo(i)}
         total={game.totals[i]}
         timer={turnTimer && turnTimer.seat === i ? turnTimer.timer : null}
+        speaking={voiceOn && speaking[i] === true}
+        voiceMuted={voiceOn && mutedSeats[i] === true}
+        onPress={rel !== 0 && canMuteSeat(view, i, voiceOn) ? () => setMenuSeat(i) : undefined}
         t={t}
       />
     );
@@ -155,6 +198,22 @@ export function Table({
           }}>
           <Text numberOfLines={1} style={{ color: myTurn ? '#2A1B00' : CREAM, fontWeight: '800', fontSize: 13 }}>{status}</Text>
         </View>
+      ) : null}
+
+      {menuSeat !== null && canMuteSeat(view, menuSeat, voiceOn) ? (
+        <MuteMenu
+          name={view.seats[menuSeat].name}
+          rel={(menuSeat - me + 4) % 4}
+          muted={mutedSeats[menuSeat] === true}
+          h={h}
+          w={w}
+          onClose={() => setMenuSeat(null)}
+          onToggle={() => {
+            useVoice.getState().setSeatMuted(menuSeat, mutedSeats[menuSeat] !== true);
+            setMenuSeat(null);
+          }}
+          t={t}
+        />
       ) : null}
 
       {toast ? (
