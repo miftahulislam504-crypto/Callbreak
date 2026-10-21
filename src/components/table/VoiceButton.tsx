@@ -10,6 +10,8 @@ import { useRoom } from '@/state/room';
 import { useVoice, type VoiceNotice } from '@/state/voice';
 
 const NOTICE_MS = 5000;
+/** Notices about something that went wrong get the red border; tips and "reconnecting" stay neutral. */
+const DANGER_NOTICES = new Set<VoiceNotice>(['failed', 'mic_denied', 'network', 'service', 'session_ended']);
 
 function noticeText(t: T, n: VoiceNotice): string {
   switch (n) {
@@ -17,6 +19,10 @@ function noticeText(t: T, n: VoiceNotice): string {
     case 'mic_denied': return t('micDenied');
     case 'need_players': return t('voiceNeedPlayers');
     case 'failed': return t('voiceFailed');
+    case 'network': return t('voiceNetwork');
+    case 'service': return t('voiceService');
+    case 'session_ended': return t('voiceSessionEnded');
+    case 'reconnecting': return t('voiceReconnecting');
   }
 }
 
@@ -91,7 +97,7 @@ export function VoiceButton({ variant }: { variant: 'table' | 'menu' }) {
           pointerEvents="none"
           style={{
             position: 'absolute', top: h + 6, right: 0, width: 210, zIndex: 30, borderRadius: 12, paddingVertical: 7, paddingHorizontal: 10,
-            backgroundColor: 'rgba(0,0,0,0.85)', borderWidth: 1, borderColor: notice === 'failed' || notice === 'mic_denied' ? DANGER : 'rgba(255,255,255,0.2)',
+            backgroundColor: 'rgba(0,0,0,0.85)', borderWidth: 1, borderColor: DANGER_NOTICES.has(notice) ? DANGER : 'rgba(255,255,255,0.2)',
           }}>
           <Text style={{ color: '#fff', fontSize: 12.5, textAlign: 'center' }}>{noticeText(t, notice)}</Text>
         </View>
