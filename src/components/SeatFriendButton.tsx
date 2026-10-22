@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Text } from 'react-native';
+import { Text, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Button } from '@/components/kit';
 import { GREEN_OK, MUTED } from '@/constants/palette';
@@ -8,7 +8,7 @@ import { relationOf } from '@/lib/socialLogic';
 import { useSocial } from '@/state/social';
 
 /** Next to a player's name in the lobby: add them as a friend (or accept their request / show the status). */
-export function SeatFriendButton({ uid }: { uid?: string | null }) {
+export function SeatFriendButton({ uid, style }: { uid?: string | null; style?: StyleProp<ViewStyle> }) {
   const t = useT();
   const active = useSocial((s) => s.active);
   const me = useSocial((s) => s.me);
@@ -34,5 +34,5 @@ export function SeatFriendButton({ uid }: { uid?: string | null }) {
       setBusy(false);
     }
   };
-  return <Button compact variant="secondary" title={rel === 'incoming' ? t('accept') : t('addFriendShort')} loading={busy} onPress={() => void press()} />;
+  return <Button compact variant="secondary" style={style} title={rel === 'incoming' ? t('accept') : t('addFriendShort')} loading={busy} onPress={() => void press()} />;
 }

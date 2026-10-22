@@ -114,7 +114,7 @@ function Identity(p: PlayerSeatProps) {
     <Pressable disabled={!p.onPress} onPress={p.onPress} hitSlop={4} style={{ alignItems: 'center', gap: 3 }}>
       <View style={{ width: RING_W, height: RING_H, alignItems: 'center', justifyContent: 'center', opacity: p.offline ? 0.55 : 1 }}>
         <TurnGlow active={p.isTurn} />
-        <Avatar name={p.name} uri={p.avatar} size={AV} />
+        <Avatar name={p.name} uri={p.avatar} bot={p.isBot} size={AV} />
         <SpeakRing active={!!p.speaking} />
         {p.voiceMuted ? (
           <View style={{ position: 'absolute', right: -4, bottom: -3, width: 18, height: 18, borderRadius: 9, backgroundColor: '#B3262D', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#3A0A0D' }}>

@@ -1,3 +1,5 @@
+import { BalooDa2_700Bold, BalooDa2_800ExtraBold } from '@expo-google-fonts/baloo-da-2';
+import { useFonts } from 'expo-font';
 import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef } from 'react';
@@ -15,6 +17,8 @@ SplashScreen.preventAutoHideAsync();
 
 function Gate() {
   const { status, uid, profile } = useAuth();
+  // Menu font. If it fails to load, carry on with the system font rather than blocking the app.
+  const [fontsLoaded, fontError] = useFonts({ BalooDa2_700Bold, BalooDa2_800ExtraBold });
   const bootstrap = useRoom((s) => s.bootstrap);
   const foreground = useRoom((s) => s.foreground);
 
@@ -45,7 +49,7 @@ function Gate() {
     return () => useSocial.getState().stop();
   }, [status, uid]);
 
-  if (status === 'loading') return null;
+  if (status === 'loading' || !(fontsLoaded || fontError)) return null;
   return (
     <>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#06241A' } }}>

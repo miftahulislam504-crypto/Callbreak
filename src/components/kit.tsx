@@ -7,20 +7,34 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ACCENT, ACCENT_DARK, BG_DEEP, CREAM, DANGER, GOLD, GOLD_DEEP, LINE, MUTED, PANEL, PANEL_HI } from '@/constants/palette';
+import { txt } from '@/constants/fonts';
 import { Spacing } from '@/constants/theme';
 import { Image } from 'expo-image';
 
+import { botAvatar } from '@/lib/botAvatars';
 import { avatarColor, avatarWidth } from '@/lib/profile';
 
-/** Faint big suit symbols behind menu screens, so they are not flat black/green. */
+/**
+ * The card-room backdrop behind every menu screen: felt with a soft spotlight in the middle, a thin gold
+ * "table rail" line near the edges and a few faint suit marks. Pure Views, no images.
+ */
 export function MenuBackdrop() {
-  const s = { position: 'absolute' as const, color: 'rgba(255,255,255,0.045)', fontWeight: '800' as const };
+  const disc = (d: number, a: number) => ({
+    position: 'absolute' as const, left: '50%' as const, top: '50%' as const, width: d, height: d, borderRadius: d / 2,
+    marginLeft: -d / 2, marginTop: -d / 2, backgroundColor: `rgba(31,160,106,${a})`,
+  });
+  const s = { position: 'absolute' as const, color: 'rgba(255,255,255,0.04)', fontWeight: '800' as const };
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <View style={disc(980, 0.05)} />
+      <View style={disc(720, 0.05)} />
+      <View style={disc(480, 0.06)} />
+      <View style={disc(260, 0.06)} />
       <Text style={[s, { fontSize: 190, left: -30, top: -50 }]}>♠</Text>
-      <Text style={[s, { fontSize: 150, right: 30, top: -20, color: 'rgba(229,72,77,0.07)' }]}>♥</Text>
-      <Text style={[s, { fontSize: 170, left: '38%', bottom: -70, color: 'rgba(229,72,77,0.06)' }]}>♦</Text>
+      <Text style={[s, { fontSize: 150, right: 30, top: -20, color: 'rgba(229,72,77,0.06)' }]}>♥</Text>
+      <Text style={[s, { fontSize: 170, left: '38%', bottom: -70, color: 'rgba(229,72,77,0.05)' }]}>♦</Text>
       <Text style={[s, { fontSize: 140, right: -20, bottom: -30 }]}>♣</Text>
+      <View style={{ position: 'absolute', left: 6, right: 6, top: 6, bottom: 6, borderRadius: 24, borderWidth: 1.5, borderColor: 'rgba(242,193,78,0.16)' }} />
     </View>
   );
 }
@@ -58,9 +72,9 @@ export function CardTitle({ icon, title, hint }: { icon?: string; title: string;
     <View style={{ gap: 2 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         {icon ? <Text style={{ color: GOLD, fontSize: 18 }}>{icon}</Text> : null}
-        <Text style={{ color: CREAM, fontSize: 17, fontWeight: '800' }}>{title}</Text>
+        <Text style={[txt(18), { color: CREAM }]}>{title}</Text>
       </View>
-      {hint ? <Text style={{ color: MUTED, fontSize: 12.5 }}>{hint}</Text> : null}
+      {hint ? <Text style={[txt(12.5, false), { color: MUTED }]}>{hint}</Text> : null}
     </View>
   );
 }
@@ -86,7 +100,7 @@ export function Button({
         { backgroundColor: bg, borderBottomColor: edge, opacity: off ? 0.5 : 1, transform: [{ translateY: pressed ? 2 : 0 }], borderBottomWidth: pressed ? 2 : 4 },
         style,
       ]}>
-      {loading ? <ActivityIndicator color={fg} /> : <Text style={{ color: fg, fontSize: compact ? 14 : 16, fontWeight: '800' }}>{title}</Text>}
+      {loading ? <ActivityIndicator color={fg} /> : <Text style={[txt(compact ? 14 : 17), { color: fg }]}>{title}</Text>}
     </Pressable>
   );
 }
@@ -99,7 +113,7 @@ export function Chip({
       disabled={disabled}
       onPress={onPress}
       style={[styles.chip, selected ? { borderColor: GOLD, backgroundColor: 'rgba(242,193,78,0.16)' } : null, { opacity: disabled ? 0.4 : 1 }]}>
-      <Text style={{ color: selected ? GOLD : CREAM, fontSize: 14, fontWeight: '800' }}>{label}</Text>
+      <Text style={[txt(14.5), { color: selected ? GOLD : CREAM }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -130,19 +144,22 @@ export function Banner({ text, onClose, tone = 'error' }: { text: string; onClos
  * Mini rectangular avatar (portrait, rounded corners). Shows the player's photo when there is one,
  * otherwise their coloured initial. `size` is the height; the width follows AVATAR_RATIO.
  */
-export function Avatar({ name, size = 40, uri }: { name: string; size?: number; uri?: string | null }) {
+export function Avatar({ name, size = 40, uri, bot = false }: { name: string; size?: number; uri?: string | null; bot?: boolean }) {
   const initial = (Array.from(name.trim())[0] ?? '?').toUpperCase();
+  const animal = bot ? botAvatar(name) : null;
   const w = avatarWidth(size);
   const border = Math.max(1.5, size * 0.05);
   return (
     <View
       style={{
-        width: w, height: size, borderRadius: Math.round(size * 0.18), backgroundColor: avatarColor(name),
+        width: w, height: size, borderRadius: Math.round(size * 0.18), backgroundColor: animal ? animal.bg : avatarColor(name),
         alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
         borderWidth: border, borderColor: 'rgba(255,255,255,0.55)',
       }}>
       {uri ? (
         <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={120} />
+      ) : animal ? (
+        <Text style={{ fontSize: size * 0.5, lineHeight: size * 0.62 }}>{animal.emoji}</Text>
       ) : (
         <Text style={{ color: '#fff', fontSize: size * 0.44, fontWeight: '800' }}>{initial}</Text>
       )}
@@ -165,7 +182,7 @@ export function PillButton({ label, onPress, tone = 'plain' }: { label: string; 
         backgroundColor: tone === 'danger' ? 'rgba(229,72,77,0.22)' : 'rgba(255,255,255,0.10)',
         borderWidth: 1, borderColor: tone === 'danger' ? 'rgba(229,72,77,0.5)' : LINE, opacity: pressed ? 0.7 : 1,
       })}>
-      <Text style={{ color: tone === 'danger' ? '#FF9A9E' : CREAM, fontWeight: '800', fontSize: 13.5 }}>{label}</Text>
+      <Text style={[txt(14), { color: tone === 'danger' ? '#FF9A9E' : CREAM }]}>{label}</Text>
     </Pressable>
   );
 }
