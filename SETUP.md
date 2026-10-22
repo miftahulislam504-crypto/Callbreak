@@ -87,3 +87,22 @@ npx eas-cli build -p android --profile production
 - `production` প্রোফাইল AAB বানায় এবং `CB_RELEASE=1` বসায়; `app.config.js` তখন `usesCleartextTraffic` বন্ধ করে (শুধু `wss://` চলে)। `preview` ও ডেভ বিল্ডে `ws://` চলে।
 - `EXPO_PUBLIC_*` env-গুলো `production` environment-এও বসাতে হবে (উপরের `env:create` কমান্ড, `--environment production` দিয়ে)।
 - version code নিজে বাড়ে (`autoIncrement`)।
+
+## 8. বন্ধু সিস্টেম (ফ্রেন্ড কোড, রুম ইনভাইট, নোটিফিকেশন)
+
+**কীভাবে কাজ করে:** হোমের **👥 বন্ধু** বাটন → নিজের *ফ্রেন্ড কোড* বন্ধুকে দাও, বা বন্ধুর কোড লিখে রিকোয়েস্ট পাঠাও। লবিতে কোনো খেলোয়াড়ের পাশে **＋ বন্ধু** চাপলেও রিকোয়েস্ট যায়। লবিতে **👥 বন্ধুকে ডাকো** চাপলে বন্ধুদের তালিকা আসে; **ডাকো** চাপলে বন্ধুর কাছে নোটিফিকেশন যায় (অ্যাপ খোলা থাকলে উপরে ব্যানার + কম্পন, বন্ধ থাকলে ফোনের পুশ), সে **ঢোকো** চাপলেই রুমে ঢুকে যায়। ইনভাইট ৫ মিনিট পর অচল হয়।
+
+### একবারের সেটআপ
+1. **Firestore rules (জরুরি):** Firebase console → Firestore Database → **Rules** → এই repo-র নতুন `firestore.rules` পুরোটা paste করে **Publish**। না করলে Friends পাতায় লাল বার্তা আসবে।
+2. **সার্ভার আপডেট:** `CallBreakRoom.ts` বদলেছে (প্রতিটি সিটের `uid` যায়)। `git push` করলে Render নিজে deploy করে। না করলে শুধু লবির **＋ বন্ধু** বাটন আসবে না, বাকি সব চলবে।
+3. **নতুন APK:** `expo-notifications` নেটিভ মডিউল যোগ হয়েছে, তাই `npm install` করে নতুন build দাও: `npx eas-cli build -p android --profile preview`। Expo Go-তে অ্যাপের ভেতরের ব্যানার চলে, ফোনের পুশ চলে না।
+
+### অ্যাপ বন্ধ থাকলেও পুশ পেতে (ঐচ্ছিক, না করলে শুধু ব্যানার চলবে)
+1. Firebase console → Project settings → **Add app → Android**, package `com.callbreak.app` → `google-services.json` নামিয়ে প্রজেক্টের রুটে রাখো, আর `app.json`-এর `android`-এ বসাও: `"googleServicesFile": "./google-services.json"`।
+2. Firebase console → Project settings → **Service accounts → Generate new private key** (JSON ফাইল)।
+3. `npx eas-cli credentials` → Android → **Google Service Account Key for Push Notifications (FCM V1)** → ওই JSON upload করো।
+4. নতুন build দাও (উপরের ৩ নম্বর)। প্রথমবার অ্যাপ খুললে নোটিফিকেশনের অনুমতি চাইবে।
+
+### জেনে রাখো
+- অ্যাকাউন্ট এখনো গেস্ট (anonymous)। Sign out করলে বা অ্যাপের ডেটা মুছলে নতুন আইডি হয়, তখন বন্ধুর তালিকা হারায়। Google login এলে এটা ঠিক হবে।
+- বন্ধুর সংখ্যা সর্বোচ্চ ১০০। এক বন্ধুকে একসাথে একটাই ইনভাইট থাকে; আবার ডাকলে আগেরটা বদলে নতুন ইনভাইট যায়।

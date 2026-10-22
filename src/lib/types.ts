@@ -53,6 +53,8 @@ export interface PublicSeat {
   auto: boolean;
   /** Done looking at the cards (bots always are). */
   ready?: boolean;
+  /** The player's account id (humans only), so you can add them as a friend. */
+  uid?: string | null;
 }
 
 export interface RoomView {

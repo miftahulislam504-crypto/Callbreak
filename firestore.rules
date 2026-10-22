@@ -1,17 +1,116 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Each player can read and write only their own profile.
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isMe(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // ---------------------------------------------------------------------------------
+    // Profiles. Any signed-in player can read one profile by uid (name, photo, friend code;
+    // needed to show friends and friend requests) but nobody can list all of them.
+    // Only the owner can write, and the friend code can be set once and never changes.
+    // ---------------------------------------------------------------------------------
     match /users/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['name', 'updatedAt', 'avatar'])
+      allow get: if signedIn();
+      allow create, update: if isMe(uid)
+        && request.resource.data.keys().hasOnly(['name', 'updatedAt', 'avatar', 'friendCode'])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 20
         // Optional profile photo: a small JPEG data URI (the app sends ~96x120 px, a few KB).
         && (!('avatar' in request.resource.data)
-            || (request.resource.data.avatar is string && request.resource.data.avatar.size() <= 16000));
+            || (request.resource.data.avatar is string && request.resource.data.avatar.size() <= 16000))
+        && (!('friendCode' in request.resource.data)
+            || (request.resource.data.friendCode is string
+                && request.resource.data.friendCode.size() == 6
+                && (resource == null
+                    || !('friendCode' in resource.data)
+                    || resource.data.friendCode == request.resource.data.friendCode)));
+
+      // My friend list: one doc per friend. Only I can read it. A friendship is created only by
+      // accepting a pending request (the accepting side may write both halves), and either side can end it.
+      match /friends/{friendUid} {
+        allow read: if isMe(uid);
+        allow create: if request.resource.data.keys().hasOnly(['since'])
+          && ((isMe(uid)
+                && exists(/databases/$(database)/documents/friendRequests/$(friendUid + '_' + uid)))
+              || (isMe(friendUid)
+                && exists(/databases/$(database)/documents/friendRequests/$(uid + '_' + friendUid))));
+        allow delete: if isMe(uid) || isMe(friendUid);
+      }
+    }
+
+    // Friend code -> uid lookup. Anyone signed in can look a code up; a player can only ever create
+    // the one code that is also written to their own profile in the same batch.
+    match /friendCodes/{code} {
+      allow get: if signedIn();
+      allow create: if isMe(request.resource.data.uid)
+        && request.resource.data.keys().hasOnly(['uid'])
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.friendCode == code;
+    }
+
+    // Friend requests. Doc id = "<fromUid>_<toUid>". Both sides can read and delete (cancel / decline).
+    match /friendRequests/{id} {
+      // get: a missing doc has no resource, so "does a request exist?" checks are allowed to come back empty.
+      allow get: if signedIn()
+        && (resource == null || resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow list: if signedIn()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['from', 'to', 'fromName', 'createdAt'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.to is string
+        && request.resource.data.to != request.auth.uid
+        && id == request.auth.uid + '_' + request.resource.data.to
+        && request.resource.data.fromName is string
+        && request.resource.data.fromName.size() > 0
+        && request.resource.data.fromName.size() <= 20
+        && request.resource.data.createdAt == request.time
+        && !exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(request.resource.data.to));
+      allow delete: if signedIn()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+    }
+
+    // Room invites. Doc id = "<fromUid>_<toUid>", so a friend has at most one pending invite from you
+    // (a new invite replaces the old one). Only a friend who accepted you can be invited.
+    match /invites/{id} {
+      allow get: if signedIn()
+        && (resource == null || resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow list: if signedIn()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['from', 'to', 'fromName', 'roomCode', 'roomName', 'createdAt'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.to is string
+        && id == request.auth.uid + '_' + request.resource.data.to
+        && request.resource.data.fromName is string
+        && request.resource.data.fromName.size() > 0
+        && request.resource.data.fromName.size() <= 20
+        && request.resource.data.roomCode is string
+        && request.resource.data.roomCode.size() == 6
+        && request.resource.data.roomName is string
+        && request.resource.data.roomName.size() <= 40
+        && request.resource.data.createdAt == request.time
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.to)/friends/$(request.auth.uid));
+      allow delete: if signedIn()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+    }
+
+    // Push token (Expo) of a device, so a friend's invite can reach you when the app is closed.
+    // Only you and your friends can read it.
+    match /pushTokens/{uid} {
+      allow read: if isMe(uid)
+        || (signedIn()
+            && exists(/databases/$(database)/documents/users/$(uid)/friends/$(request.auth.uid)));
+      allow create, update: if isMe(uid)
+        && request.resource.data.keys().hasOnly(['token', 'updatedAt'])
+        && request.resource.data.token is string
+        && request.resource.data.token.size() <= 200;
+      allow delete: if isMe(uid);
     }
   }
 }

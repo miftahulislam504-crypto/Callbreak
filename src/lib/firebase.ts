@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, getReactNativePersistence, initializeAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, type Firestore } from 'firebase/firestore';
 
 import { firebaseConfig } from './env';
 
@@ -18,6 +18,13 @@ export function getFirebase() {
   } catch {
     auth = getAuth(app); // already initialised (fast refresh)
   }
-  cached = { app, auth, db: getFirestore(app) };
+  let db: Firestore;
+  try {
+    // Live listeners (friends, invites) are steadier over long polling on some mobile networks.
+    db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+  } catch {
+    db = getFirestore(app); // already initialised (fast refresh)
+  }
+  cached = { app, auth, db };
   return cached;
 }

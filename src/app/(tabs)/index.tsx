@@ -11,11 +11,18 @@ import { useAuth } from '@/lib/auth';
 import { errorText, useT } from '@/lib/i18n';
 import type { PublicRoom } from '@/lib/types';
 import { useRoom } from '@/state/room';
+import { useSocial } from '@/state/social';
 
 export default function Home() {
   const t = useT();
   const { profile } = useAuth();
   const { view, busy, error, server, notice, joinRoom, clearError, clearNotice } = useRoom();
+
+  const socialActive = useSocial((s) => s.active);
+  const friendUids = useSocial((s) => s.friendUids);
+  const pendingRequests = useSocial((s) => s.incoming.filter((r) => !s.friendUids.includes(r.from)).length);
+  const pendingInvites = useSocial((s) => s.invites.length);
+  const badge = pendingRequests + pendingInvites;
 
   const [rooms, setRooms] = useState<PublicRoom[] | null>(null);
   const [roomsFailed, setRoomsFailed] = useState(false);
@@ -59,6 +66,26 @@ export default function Home() {
         </Row>
         <Row style={{ gap: 10 }}>
           <Text style={{ color: GOLD, fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>♠ {t('appName')}</Text>
+          <Pressable
+            onPress={() => router.push('/friends')}
+            hitSlop={8}
+            style={({ pressed }) => ({
+              paddingHorizontal: 14, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center',
+              backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: badge > 0 ? GOLD : LINE, opacity: pressed ? 0.7 : 1,
+            })}>
+            <Text style={{ color: CREAM, fontWeight: '800', fontSize: 13.5 }}>
+              👥 {t('friends')}{socialActive && friendUids.length > 0 ? ` ${friendUids.length}` : ''}
+            </Text>
+            {badge > 0 ? (
+              <View
+                style={{
+                  position: 'absolute', top: -5, right: -5, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5,
+                  backgroundColor: '#E5484D', alignItems: 'center', justifyContent: 'center',
+                }}>
+                <Text style={{ color: '#fff', fontSize: 11.5, fontWeight: '900' }}>{badge}</Text>
+              </View>
+            ) : null}
+          </Pressable>
           <Pressable
             onPress={() => router.push('/profile')}
             hitSlop={8}

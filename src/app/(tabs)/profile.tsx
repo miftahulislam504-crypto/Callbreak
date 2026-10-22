@@ -10,6 +10,7 @@ import { pickAvatar } from '@/lib/avatarImage';
 import { LIMITS, SERVER_URL } from '@/lib/env';
 import { useLang, useT } from '@/lib/i18n';
 import { useRoom } from '@/state/room';
+import { useSocial } from '@/state/social';
 
 export default function ProfileScreen() {
   const t = useT();
@@ -100,6 +101,7 @@ export default function ProfileScreen() {
             variant="danger"
             onPress={async () => {
               await leaveRoom();
+              await useSocial.getState().prepareSignOut();
               await signOut();
             }}
           />

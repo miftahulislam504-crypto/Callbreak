@@ -52,13 +52,26 @@
         }
       ],
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#F2C14E",
+          "defaultChannel": "invites"
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
             "usesCleartextTraffic": true,
-            "buildArchs": ["arm64-v8a", "armeabi-v7a"],
+            "buildArchs": [
+              "arm64-v8a",
+              "armeabi-v7a"
+            ],
             "packagingOptions": {
-              "exclude": ["**/libagora_*_extension.so"]
+              "exclude": [
+                "**/libagora_*_extension.so"
+              ]
             }
           }
         }

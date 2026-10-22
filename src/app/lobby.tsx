@@ -5,18 +5,23 @@ import { Pressable, ScrollView, Share, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar, Banner, Button, Card, MenuBackdrop, PillButton, Row } from '@/components/kit';
+import { InviteFriendsModal } from '@/components/InviteFriendsModal';
+import { SeatFriendButton } from '@/components/SeatFriendButton';
 import { TargetPicker } from '@/components/target-picker';
 import { SeatMuteButton, VoiceButton } from '@/components/table/VoiceButton';
 import { BG_DEEP, CREAM, GOLD, GREEN_OK, LINE, MUTED } from '@/constants/palette';
 import { errorText, useT } from '@/lib/i18n';
 import { avatarWidth } from '@/lib/profile';
 import { useRoom } from '@/state/room';
+import { useSocial } from '@/state/social';
 import { useVoice } from '@/state/voice';
 
 export default function Lobby() {
   const t = useT();
   const { view, avatars, link, error, send, leaveRoom, clearError } = useRoom();
   const [copied, setCopied] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const socialActive = useSocial((s) => s.active);
   const speaking = useVoice((s) => s.speaking);
   const voiceOn = useVoice((s) => s.status === 'on');
 
@@ -72,6 +77,10 @@ export default function Lobby() {
             </Row>
           </Card>
 
+          {socialActive ? (
+            <Button title={`👥 ${t('inviteFriends')}`} variant="secondary" onPress={() => setInviteOpen(true)} />
+          ) : null}
+
           {isHost ? (
             <Card>
               <TargetPicker value={view.targetScore} onChange={(n) => send('setTarget', { targetScore: n })} />
@@ -118,11 +127,17 @@ export default function Lobby() {
                 </Text>
               </View>
               <SeatMuteButton seat={s.seat} />
+              {s.occupied && !s.isBot && s.seat !== view.mySeat ? <SeatFriendButton uid={s.uid} /> : null}
+              {!s.occupied && socialActive ? (
+                <Button title={t('invite')} variant="secondary" compact onPress={() => setInviteOpen(true)} />
+              ) : null}
               {isHost && s.isBot ? <Button title={t('removeBot')} variant="secondary" compact onPress={() => send('removeBot', { seat: s.seat })} /> : null}
             </View>
           ))}
         </ScrollView>
       </View>
+
+      <InviteFriendsModal visible={inviteOpen} onClose={() => setInviteOpen(false)} roomCode={view.roomCode} roomName={view.roomName} />
     </SafeAreaView>
   );
 }
