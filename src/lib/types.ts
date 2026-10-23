@@ -58,6 +58,8 @@ export interface PublicSeat {
 }
 
 export interface RoomView {
+  /** Absent on views from older servers: that always means Call Break. */
+  gameId?: 'callbreak';
   roomCode: string;
   roomName: string;
   isPrivate: boolean;
@@ -85,7 +87,10 @@ export interface PublicRoom {
   clients: number;
   maxClients: number;
   name: string;
-  targetScore: number;
+  /** Call Break: target score. 29: game points to win. Absent in poker rooms. */
+  targetScore?: number;
+  /** Poker rooms: everyone's starting chips. */
+  startingChips?: number;
   humans: number;
   bots: number;
   status: string;
@@ -121,3 +126,194 @@ export interface VoiceDenied {
 
 /** The server's answer to `voiceToken` (the `voice` message). */
 export type VoiceInfo = VoiceGrant | VoiceDenied;
+
+/* ----------------------------------------------------------------------------
+ * Games
+ * ------------------------------------------------------------------------- */
+
+export type GameId = 'callbreak' | 'twentynine' | 'poker';
+
+/** The fields every game's room view carries (lobby, voice and friends only need these). */
+export interface CommonRoomView {
+  gameId?: GameId;
+  roomCode: string;
+  roomName: string;
+  isPrivate: boolean;
+  status: string;
+  hostSeat: number;
+  mySeat: number;
+  seats: PublicSeat[];
+  deadline: number | null;
+  nextRoundAt: number | null;
+  dealAt?: number | null;
+  serverTime: number;
+}
+
+/* ------------------------------ 29 ------------------------------ */
+// Mirrors the server's engine/twentynine.ts + rooms/TwentyNineRoom.ts.
+
+export type TNPhase = 'lobby' | 'dealing' | 'bidding' | 'trump' | 'playing' | 'roundEnd' | 'finished';
+
+export interface TNPlayed {
+  seat: number;
+  card: Card;
+  /** The card was played as trump (trump had already been shown). */
+  asTrump: boolean;
+}
+
+export interface TNRoundResult {
+  round: number;
+  dealer: number;
+  declarer: number;
+  contract: number;
+  /** Points the bidder's team had to reach (the bid, moved by a pair). */
+  need: number;
+  trumpSuit: Suit;
+  pairTeam: number | null;
+  /** Card points per team (includes the last-trick bonus). */
+  teamPoints: number[];
+  success: boolean;
+  delta: number[];
+  totals: number[];
+}
+
+export interface TNGameView {
+  phase: TNPhase;
+  round: number;
+  dealer: number;
+  turn: number;
+  targetScore: number;
+  minBid: number;
+  maxBid: number;
+  maxRounds: number;
+  myHand: Card[];
+  legal: Card[];
+  /** I may ask for the hidden trump to be shown right now. */
+  canReveal: boolean;
+  handCounts: number[];
+  /** Last bid per seat: a number, 0 = pass, null = has not acted. */
+  bids: (number | null)[];
+  highBid: number;
+  highBidder: number;
+  /** Everyone else passed and it is my turn: I cannot pass. */
+  forcedBid: boolean;
+  declarer: number;
+  contract: number;
+  need: number;
+  /** The trump suit if I may know it (I am the bidder, or it was shown); otherwise null. */
+  trumpSuit: Suit | null;
+  trumpRevealed: boolean;
+  /** Trump has been picked but is hidden from me. */
+  trumpHidden: boolean;
+  revealedBy: number;
+  pair: { seat: number; team: number } | null;
+  tricksWon: number[];
+  /** Card points per team so far this round. */
+  teamPoints: number[];
+  trick: TNPlayed[];
+  lastTrick: { cards: TNPlayed[]; winner: number; points: number } | null;
+  /** Game points per team (team 0 = seats 0 and 2, team 1 = seats 1 and 3). */
+  totals: number[];
+  history: TNRoundResult[];
+  winners: number[] | null;
+  ranking: number[] | null;
+}
+
+export interface TNRoomView extends CommonRoomView {
+  gameId: 'twentynine';
+  status: TNPhase;
+  targetScore: number;
+  dealMs: number;
+  viewMs: number;
+  bidSeconds: number;
+  playSeconds: number;
+  game: TNGameView | null;
+}
+
+/* ------------------------------ Poker ------------------------------ */
+// Mirrors the server's engine/poker.ts + rooms/PokerRoom.ts.
+
+export type PokerPhase = 'lobby' | 'betting' | 'handEnd' | 'finished';
+export type Street = 'preflop' | 'flop' | 'turn' | 'river';
+export type PokerActionType = 'fold' | 'check' | 'call' | 'raise' | 'allin';
+
+export interface LegalActions {
+  canCheck: boolean;
+  canCall: boolean;
+  callAmount: number;
+  canRaise: boolean;
+  /** "Raise to": the total bet for this street. */
+  minRaiseTo: number;
+  maxRaiseTo: number;
+}
+
+export interface PokerPlayerView {
+  seat: number;
+  inGame: boolean;
+  inHand: boolean;
+  chips: number;
+  bet: number;
+  folded: boolean;
+  allIn: boolean;
+  /** 'sb' | 'bb' | 'fold' | 'check' | 'call' | 'raise' | 'allin' | null */
+  lastAction: string | null;
+  /** Cards everyone may see (showdown only). */
+  shown: Card[] | null;
+}
+
+export interface PokerPotResult {
+  amount: number;
+  winners: number[];
+  eligible: number[];
+}
+
+export interface PokerHandResult {
+  handNo: number;
+  board: Card[];
+  showdown: boolean;
+  pots: PokerPotResult[];
+  players: { seat: number; hole: Card[] | null; handName: string | null; folded: boolean; delta: number; chips: number }[];
+  winners: number[];
+}
+
+export interface PokerGameView {
+  phase: PokerPhase;
+  handNo: number;
+  maxHands: number;
+  startingChips: number;
+  smallBlind: number;
+  bigBlind: number;
+  handsToNextLevel: number;
+  button: number;
+  sbSeat: number;
+  bbSeat: number;
+  street: Street;
+  board: Card[];
+  /** Everything in the middle, current bets included. */
+  pot: number;
+  turn: number;
+  currentBet: number;
+  players: PokerPlayerView[];
+  myHole: Card[];
+  /** What I can do right now; null when it is not my turn. */
+  actions: LegalActions | null;
+  lastResult: PokerHandResult | null;
+  winners: number[] | null;
+  ranking: number[] | null;
+}
+
+export interface PokerRoomView extends CommonRoomView {
+  gameId: 'poker';
+  status: PokerPhase;
+  startingChips: number;
+  actionSeconds: number;
+  game: PokerGameView | null;
+}
+
+/** Whatever game the player is in. */
+export type AnyRoomView = RoomView | TNRoomView | PokerRoomView;
+
+export const isTwentyNine = (v: AnyRoomView | null | undefined): v is TNRoomView => v?.gameId === 'twentynine';
+export const isPoker = (v: AnyRoomView | null | undefined): v is PokerRoomView => v?.gameId === 'poker';
+export const isCallBreak = (v: AnyRoomView | null | undefined): v is RoomView => !!v && v.gameId !== 'twentynine' && v.gameId !== 'poker';
+export const gameIdOf = (v: { gameId?: GameId } | null | undefined): GameId => v?.gameId ?? 'callbreak';

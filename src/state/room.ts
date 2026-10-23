@@ -6,11 +6,11 @@ import { AppError, toAppError } from '@/lib/errors';
 import { SERVER_URL } from '@/lib/env';
 import { GameConnection, type CreateOptions } from '@/lib/gameClient';
 import { getIdentity } from '@/lib/session';
-import type { RoomView } from '@/lib/types';
+import type { AnyRoomView, GameId } from '@/lib/types';
 import { useVoice } from '@/state/voice';
 
 interface RoomState {
-  view: RoomView | null;
+  view: AnyRoomView | null;
   /** Seat -> photo data URI (null = none). Filled by the server's 'avatars' message. */
   avatars: (string | null)[];
   link: 'online' | 'reconnecting';
@@ -22,7 +22,7 @@ interface RoomState {
   notice: 'roomLost' | null;
   createRoom(o: CreateOptions): Promise<void>;
   joinRoom(code: string): Promise<void>;
-  quickMatch(targetScore: number): Promise<void>;
+  quickMatch(game: GameId, setting: number): Promise<void>;
   /** Wakes the server if needed, then silently gets back into the room we were in. */
   bootstrap(): Promise<void>;
   wake(): Promise<boolean>;
@@ -94,7 +94,7 @@ export const useRoom = create<RoomState>((set, get) => {
     notice: null,
     createRoom: (o) => run(() => conn.create(o)),
     joinRoom: (code) => run(() => conn.join(code)),
-    quickMatch: (target) => run(() => conn.quickMatch(target)),
+    quickMatch: (game, setting) => run(() => conn.quickMatch(game, setting)),
     wake,
     async bootstrap() {
       if (!(await wake())) return;

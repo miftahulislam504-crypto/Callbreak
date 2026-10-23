@@ -1,12 +1,22 @@
 // Pure logic: turns two consecutive server states into the table events the UI should animate.
-import type { Card, GameView } from './types';
+import type { Card } from './types';
+
+/** The part of a game state the trick animations need (Call Break and 29 both have it). */
+export interface TrickSource {
+  phase: string;
+  round: number;
+  trick: { seat: number; card: Card }[];
+  lastTrick: { cards: { seat: number; card: Card }[]; winner: number } | null;
+  tricksWon: number[];
+  history: readonly unknown[];
+}
 
 export type TableEvent =
   | { type: 'played'; seat: number; card: Card }
   | { type: 'trickWon'; seat: number }
   | { type: 'reset' };
 
-const tricksDone = (g: GameView): number => g.tricksWon.reduce((a, b) => a + b, 0);
+const tricksDone = (g: TrickSource): number => g.tricksWon.reduce((a, b) => a + b, 0);
 const played = (p: { seat: number; card: Card }): TableEvent => ({ type: 'played', seat: p.seat, card: p.card });
 
 /**
@@ -14,7 +24,7 @@ const played = (p: { seat: number; card: Card }): TableEvent => ({ type: 'played
  * Handles a trick completing (the 4th card only ever shows up in `lastTrick`), the next leader
  * already playing, and gaps (reconnect) by falling back to a reset.
  */
-export function diffGame(prev: GameView | null, next: GameView): TableEvent[] {
+export function diffGame(prev: TrickSource | null, next: TrickSource): TableEvent[] {
   if (!prev) return [];
   if (next.phase === 'lobby') return [{ type: 'reset' }];
   if (next.round !== prev.round || next.history.length < prev.history.length) return [{ type: 'reset' }];

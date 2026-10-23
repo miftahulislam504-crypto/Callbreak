@@ -5,6 +5,7 @@ import { Modal, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Banner } from '@/components/kit';
+import { PokerScreen } from '@/components/poker/PokerScreen';
 import { BidSheet } from '@/components/table/BidSheet';
 import { GameOverOverlay } from '@/components/table/GameOverOverlay';
 import { useDealClock, useTrickDisplay, useTurnTimer } from '@/components/table/hooks';
@@ -12,11 +13,12 @@ import { RoundEndOverlay } from '@/components/table/RoundEndOverlay';
 import { ScoreSheet } from '@/components/table/ScoreSheet';
 import { Table } from '@/components/table/Table';
 import { VoiceButton } from '@/components/table/VoiceButton';
+import { TwentyNineScreen } from '@/components/twentynine/TwentyNineScreen';
 import { CREAM, GOLD } from '@/constants/palette';
 import { hapticTurn } from '@/lib/haptics';
 import { errorText, useT } from '@/lib/i18n';
 import { isNoBidRound } from '@/lib/rules';
-import type { Card } from '@/lib/types';
+import { isCallBreak, isPoker, isTwentyNine, type Card } from '@/lib/types';
 import { useRoom } from '@/state/room';
 
 const chip = {
@@ -24,9 +26,20 @@ const chip = {
   backgroundColor: 'rgba(20,12,4,0.62)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
 };
 
+/** Which game screen to show: each game keeps its own table, sheets and overlays. */
 export default function Game() {
+  const view = useRoom((s) => s.view);
+  if (!view) return <Redirect href="/" />;
+  if (view.status === 'lobby') return <Redirect href="/lobby" />;
+  if (isTwentyNine(view)) return <TwentyNineScreen view={view} />;
+  if (isPoker(view)) return <PokerScreen view={view} />;
+  return <CallBreakGame />;
+}
+
+function CallBreakGame() {
   const t = useT();
-  const { view, link, error, send, leaveRoom, clearError } = useRoom();
+  const { view: anyView, link, error, send, leaveRoom, clearError } = useRoom();
+  const view = isCallBreak(anyView) ? anyView : null;
   const game = view?.game ?? null;
   const trick = useTrickDisplay(game);
   const turnTimer = useTurnTimer(view);

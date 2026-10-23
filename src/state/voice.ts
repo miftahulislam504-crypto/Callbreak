@@ -4,8 +4,8 @@ import type { VoiceDeniedReason, VoiceGrant, VoiceInfo } from '@/lib/types';
 import type { VoiceChoice } from '@/lib/voice/plan';
 import type { AudioRouteKind } from '@/lib/voice/route';
 
-/** Call Break always has 4 seats. */
-export const VOICE_SEATS = 4;
+/** The most seats any game has (poker: 6; Call Break and 29: 4). */
+export const VOICE_SEATS = 6;
 
 /** A short one-off message for the voice button to show for a few seconds. */
 export type VoiceNotice =

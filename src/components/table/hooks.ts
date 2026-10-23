@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
 import { TrickPlayer, type TrickSnapshot } from '@/lib/trickPlayer';
-import type { GameView, RoomView } from '@/lib/types';
+import type { TrickSource } from '@/lib/tableEvents';
+import type { RoomView } from '@/lib/types';
 
 import type { TurnTimer } from './TimerBar';
 
 /** What is on the table right now, animated in order (see lib/trickPlayer). */
-export function useTrickDisplay(game: GameView | null): TrickSnapshot {
+export function useTrickDisplay(game: TrickSource | null): TrickSnapshot {
   const [player] = useState(() => new TrickPlayer(game));
   useEffect(() => {
     player.update(game);
@@ -19,15 +20,26 @@ export function useTrickDisplay(game: GameView | null): TrickSnapshot {
 const BID_MS = 20_000;
 const PLAY_MS = 30_000;
 
+/** What the turn countdown needs from a Call Break or 29 room view. */
+export interface TimedView {
+  deadline: number | null;
+  serverTime: number;
+  bidSeconds: number;
+  playSeconds: number;
+  game: { phase: string; turn: number } | null;
+}
+
 /** The countdown of the human whose turn it is (the server sends no deadline for bots). */
-export function useTurnTimer(view: RoomView | null): { seat: number; timer: TurnTimer } | null {
+export function useTurnTimer(view: TimedView | null): { seat: number; timer: TurnTimer } | null {
   return useMemo(() => {
     const g = view?.game;
     if (!view || !g || view.deadline === null) return null;
-    if (g.phase !== 'bidding' && g.phase !== 'playing') return null;
+    // 29 also has a trump-picking turn, which runs on the bidding clock.
+    if (g.phase !== 'bidding' && g.phase !== 'trump' && g.phase !== 'playing') return null;
+    const bidClock = g.phase !== 'playing';
     const remainingMs = Math.max(0, view.deadline - view.serverTime);
-    const configured = g.phase === 'bidding' ? view.bidSeconds * 1000 : view.playSeconds * 1000;
-    const totalMs = Math.max(Number.isFinite(configured) && configured > 0 ? configured : g.phase === 'bidding' ? BID_MS : PLAY_MS, remainingMs);
+    const configured = bidClock ? view.bidSeconds * 1000 : view.playSeconds * 1000;
+    const totalMs = Math.max(Number.isFinite(configured) && configured > 0 ? configured : bidClock ? BID_MS : PLAY_MS, remainingMs);
     return { seat: g.turn, timer: { key: String(view.deadline), remainingMs, totalMs } };
   }, [view]);
 }

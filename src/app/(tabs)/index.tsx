@@ -1,17 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CardFan, EmptyCards, GameButton, LogoMark, RoundIconButton, SeatDots } from '@/components/gameui';
+import { GameSwitch } from '@/components/GameSwitch';
 import { Avatar, Banner, MenuBackdrop, Row } from '@/components/kit';
 import { txt } from '@/constants/fonts';
 import { BG_DEEP, CREAM, DANGER, GOLD, MUTED } from '@/constants/palette';
 import { fetchPublicRooms } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { gameInfo } from '@/lib/games';
 import { errorText, useT } from '@/lib/i18n';
 import type { PublicRoom } from '@/lib/types';
+import { useGamePick } from '@/state/gamePick';
 import { useRoom } from '@/state/room';
 import { useSocial } from '@/state/social';
 
@@ -28,17 +31,27 @@ export default function Home() {
   const [roomsFailed, setRoomsFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  const game = useGamePick((s) => s.game);
+  useEffect(() => {
+    void useGamePick.getState().load();
+  }, []);
+
   const load = useCallback(async () => {
     setRefreshing(true);
     try {
-      setRooms(await fetchPublicRooms());
+      setRooms(await fetchPublicRooms(game));
       setRoomsFailed(false);
     } catch {
       setRoomsFailed(true);
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [game]);
+
+  // Another game picked: show its rooms, not the previous game's.
+  useEffect(() => {
+    setRooms(null);
+  }, [game]);
 
   useFocusEffect(
     useCallback(() => {
@@ -81,12 +94,13 @@ export default function Home() {
       <View style={{ flex: 1, flexDirection: 'row', gap: 14, paddingHorizontal: 18, paddingTop: 4, paddingBottom: 16 }}>
         {/* Left: the game's face: logo and a fanned hand */}
         <View style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-          <LogoMark title={t('appName')} />
+          <LogoMark title={t(gameInfo(game).titleKey)} />
           <CardFan width={50} />
         </View>
 
         {/* Middle: the ways to play */}
         <View style={{ flex: 1.05, minWidth: 0, gap: 10 }}>
+          <GameSwitch />
           <GameButton big tone="gold" icon="flash" title={t('quickMatch')} hint={t('quickHint')} style={{ flex: 1.7 }} onPress={() => router.push('/quick-match')} />
           <View style={{ flex: 1, flexDirection: 'row', gap: 10 }}>
             <GameButton tone="green" icon="key" title={t('joinById')} style={{ flex: 1 }} onPress={() => router.push('/join')} />
@@ -133,10 +147,10 @@ export default function Home() {
                 })}>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text numberOfLines={1} style={[txt(15), { color: CREAM }]}>{r.name}</Text>
-                  <Text numberOfLines={1} style={[txt(12, false), { color: MUTED }]}>{r.host} · {t('targetScore')} {r.targetScore}</Text>
+                  <Text numberOfLines={1} style={[txt(12, false), { color: MUTED }]}>{r.host} · {game === 'poker' ? `${t('startingChips')} ${r.startingChips ?? ''}` : game === 'twentynine' ? t('tnTargetChip', { n: r.targetScore ?? 0 }) : `${t('targetScore')} ${r.targetScore ?? ''}`}</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end', gap: 3 }}>
-                  <SeatDots filled={r.clients} />
+                  <SeatDots filled={r.clients} total={r.maxClients} />
                   <Ionicons name="chevron-forward" size={14} color={GOLD} />
                 </View>
               </Pressable>

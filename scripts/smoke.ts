@@ -32,7 +32,7 @@ function player(name: string, url: string = URL) {
     storage,
     getIdentity: async () => ({ uid: `uid-${name}`, name, idToken: null }),
     listeners: {
-      onState: (v) => (state.view = v),
+      onState: (v) => (state.view = v as RoomView),
       onError: (e) => state.errors.push(e.code),
       onVoice: (v) => state.voice.push(v),
       onLink: () => {},

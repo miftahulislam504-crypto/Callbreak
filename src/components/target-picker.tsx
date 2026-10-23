@@ -4,7 +4,9 @@ import { Text, View } from 'react-native';
 import { Chip, Field, Row } from '@/components/kit';
 import { MUTED } from '@/constants/palette';
 import { LIMITS } from '@/lib/env';
+import { POKER_CHIPS, TN_TARGETS } from '@/lib/games';
 import { useT } from '@/lib/i18n';
+import type { GameId } from '@/lib/types';
 
 const PRESETS = [29, 49, 99];
 
@@ -54,4 +56,41 @@ export function TargetPicker({ value, onChange }: { value: number; onChange: (n:
       ) : null}
     </View>
   );
+}
+
+/** 29: how many game points a team needs to win. */
+export function TnTargetPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const t = useT();
+  return (
+    <View style={{ gap: 8 }}>
+      <Text style={{ color: MUTED, fontSize: 12.5, fontWeight: '600' }}>{t('tnTargetLabel')}</Text>
+      <Row style={{ flexWrap: 'wrap', gap: 6 }}>
+        {TN_TARGETS.map((p) => (
+          <Chip key={p} label={String(p)} selected={value === p} onPress={() => onChange(p)} />
+        ))}
+      </Row>
+    </View>
+  );
+}
+
+/** Poker: everyone's starting chips. */
+export function ChipsPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const t = useT();
+  return (
+    <View style={{ gap: 8 }}>
+      <Text style={{ color: MUTED, fontSize: 12.5, fontWeight: '600' }}>{t('startingChips')}</Text>
+      <Row style={{ flexWrap: 'wrap', gap: 6 }}>
+        {POKER_CHIPS.map((p) => (
+          <Chip key={p} label={String(p)} selected={value === p} onPress={() => onChange(p)} />
+        ))}
+      </Row>
+    </View>
+  );
+}
+
+/** The right setting picker for a game: target score, game points or starting chips. */
+export function SettingPicker({ game, value, onChange }: { game: GameId; value: number; onChange: (n: number) => void }) {
+  if (game === 'poker') return <ChipsPicker value={value} onChange={onChange} />;
+  if (game === 'twentynine') return <TnTargetPicker value={value} onChange={onChange} />;
+  return <TargetPicker value={value} onChange={onChange} />;
 }

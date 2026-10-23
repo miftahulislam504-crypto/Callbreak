@@ -9,11 +9,13 @@ import { GameButton } from '@/components/gameui';
 import { Avatar, Banner, Card, MenuBackdrop, PillButton, Row } from '@/components/kit';
 import { InviteFriendsModal } from '@/components/InviteFriendsModal';
 import { SeatFriendButton } from '@/components/SeatFriendButton';
-import { TargetPicker } from '@/components/target-picker';
+import { SettingPicker } from '@/components/target-picker';
 import { SeatMuteButton, VoiceButton } from '@/components/table/VoiceButton';
 import { txt } from '@/constants/fonts';
 import { BG_DEEP, CARD_BLACK, CREAM, FELT, GOLD, GREEN_OK, MUTED } from '@/constants/palette';
+import { gameInfo } from '@/lib/games';
 import { errorText, useT } from '@/lib/i18n';
+import { gameIdOf, isPoker } from '@/lib/types';
 import { useRoom } from '@/state/room';
 import { useSocial } from '@/state/social';
 import { useVoice } from '@/state/voice';
@@ -31,6 +33,8 @@ export default function Lobby() {
   if (view.status !== 'lobby') return <Redirect href="/game" />;
 
   const isHost = view.mySeat === view.hostSeat;
+  const gid = gameIdOf(view);
+  const info = gameInfo(gid);
   const full = view.seats.every((s) => s.occupied);
   const copy = async () => {
     await Clipboard.setStringAsync(view.roomCode);
@@ -38,6 +42,15 @@ export default function Lobby() {
     setTimeout(() => setCopied(false), 1500);
   };
   const filled = view.seats.filter((s) => s.occupied).length;
+  // Enough players to start without filling the table with bots (Call Break and 29 need 4, poker needs 2).
+  const enough = filled >= info.minPlayers;
+  const setting = isPoker(view) ? view.startingChips : view.targetScore;
+  const settingBadge = isPoker(view)
+    ? `${t('startingChips')} ${view.startingChips}`
+    : gid === 'twentynine'
+      ? t('tnTargetChip', { n: view.targetScore })
+      : `${t('targetScore')} ${view.targetScore}`;
+  const seatRows = view.seats.length > 4 ? [view.seats.slice(0, 3), view.seats.slice(3)] : [view.seats];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: BG_DEEP }}>
@@ -49,7 +62,7 @@ export default function Lobby() {
           <Text numberOfLines={1} style={[txt(24), { color: CREAM }]}>{view.roomName}</Text>
           <Row style={{ gap: 8 }}>
             <Badge icon={view.isPrivate ? 'lock-closed' : 'globe-outline'} text={view.isPrivate ? t('privateBadge') : t('publicBadge')} />
-            <Badge icon="flag" text={`${t('targetScore')} ${view.targetScore}`} />
+            <Badge icon="flag" text={settingBadge} />
           </Row>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -100,7 +113,11 @@ export default function Lobby() {
 
             {isHost ? (
               <Card>
-                <TargetPicker value={view.targetScore} onChange={(n) => send('setTarget', { targetScore: n })} />
+                <SettingPicker
+                  game={gid}
+                  value={setting}
+                  onChange={(n) => (gid === 'poker' ? send('setChips', { startingChips: n }) : send('setTarget', { targetScore: n }))}
+                />
               </Card>
             ) : null}
           </ScrollView>
@@ -111,9 +128,9 @@ export default function Lobby() {
               <GameButton
                 tone="gold"
                 icon="play"
-                title={full ? t('start') : t('startWithBots')}
+                title={enough ? t('start') : t('startWithBots')}
                 style={{ flex: 1.3 }}
-                onPress={() => send('start', { fillBots: !full })}
+                onPress={() => send('start', { fillBots: !enough })}
               />
             </View>
           ) : (
@@ -131,10 +148,11 @@ export default function Lobby() {
           }}>
           <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 22, borderWidth: 2, borderColor: 'rgba(0,0,0,0.28)' }} />
           <View style={{ alignSelf: 'center', paddingHorizontal: 14, paddingVertical: 2, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.3)' }}>
-            <Text style={[txt(14), { color: GOLD }]}>{t('playersCount', { n: filled })}</Text>
+            <Text style={[txt(14), { color: GOLD }]}>{t('playersOfMax', { n: filled, max: view.seats.length })}</Text>
           </View>
-          <View style={{ flex: 1, flexDirection: 'row', gap: 8 }}>
-            {view.seats.map((s) => {
+          {seatRows.map((row, ri) => (
+          <View key={ri} style={{ flex: 1, flexDirection: 'row', gap: 8 }}>
+            {row.map((s) => {
               const mine = s.seat === view.mySeat;
               const talking = voiceOn && speaking[s.seat];
               if (!s.occupied) {
@@ -179,6 +197,7 @@ export default function Lobby() {
               );
             })}
           </View>
+          ))}
         </View>
       </View>
 

@@ -21,7 +21,7 @@ import type { TurnTimer } from './TimerBar';
 import { TrickArea, trickAreaSize, trickCardWidth } from './TrickArea';
 
 /** Wooden planks, like the reference table, with a soft dark edge so the cards stand out. */
-function Wood() {
+export function Wood() {
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: WOOD[0] }}>
       {WOOD.map((c, i) => (
@@ -39,7 +39,7 @@ function Wood() {
 }
 
 /** Small popup next to a seat: mute or unmute that player (on this device only). Tap outside to close. */
-function MuteMenu({
+export function MuteMenu({
   name, rel, muted, w, h, onClose, onToggle, t,
 }: { name: string; rel: number; muted: boolean; w: number; h: number; onClose: () => void; onToggle: () => void; t: T }) {
   const width = 200;

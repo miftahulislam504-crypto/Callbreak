@@ -1,9 +1,8 @@
 // Framework-free wrapper around the Colyseus client (no React Native imports, so it can be
 // exercised from Node: see scripts/smoke.ts).
 import { Client, type Room } from '@colyseus/sdk';
-import type { RoomView, ServerError, VoiceDeniedReason, VoiceInfo } from './types';
+import type { AnyRoomView, GameId, ServerError, VoiceDeniedReason, VoiceInfo } from './types';
 
-const ROOM_NAME = 'callbreak';
 const TOKEN_KEY = 'cb.reconnect';
 const VOICE_REASONS: readonly VoiceDeniedReason[] = ['disabled', 'not_seated', 'rate_limited'];
 
@@ -44,7 +43,7 @@ export interface KeyValueStorage {
 }
 
 export interface Listeners {
-  onState(view: RoomView): void;
+  onState(view: AnyRoomView): void;
   /** Photos per seat (null = no photo), sent only when they change. */
   onAvatars?(avatars: (string | null)[]): void;
   onError(error: ServerError): void;
@@ -56,9 +55,14 @@ export interface Listeners {
 }
 
 export interface CreateOptions {
+  /** Which game to create a room for (Call Break when left out). */
+  game?: GameId;
   roomName?: string;
   isPrivate: boolean;
-  targetScore: number;
+  /** Call Break / 29: the score to reach. */
+  targetScore?: number;
+  /** Poker: everyone's starting chips. */
+  startingChips?: number;
 }
 
 interface Options {
@@ -93,8 +97,9 @@ export class GameConnection {
   }
 
   async create(o: CreateOptions): Promise<void> {
+    const { game = 'callbreak', ...rest } = o;
     await this.dropCurrent();
-    await this.attach(await this.client.create(ROOM_NAME, await this.joinOptions({ ...o })));
+    await this.attach(await this.client.create(game, await this.joinOptions({ ...rest })));
   }
 
   async join(roomCode: string): Promise<void> {
@@ -102,9 +107,11 @@ export class GameConnection {
     await this.attach(await this.client.joinById(roomCode.trim().toUpperCase(), await this.joinOptions()));
   }
 
-  async quickMatch(targetScore: number): Promise<void> {
+  /** `setting` is the target score (Call Break, 29) or the starting chips (poker): quick match pairs equal settings. */
+  async quickMatch(game: GameId, setting: number): Promise<void> {
     await this.dropCurrent();
-    await this.attach(await this.client.joinOrCreate(ROOM_NAME, await this.joinOptions({ targetScore })));
+    const extra = game === 'poker' ? { startingChips: setting } : { targetScore: setting };
+    await this.attach(await this.client.joinOrCreate(game, await this.joinOptions(extra)));
   }
 
   /** Try to get back into the room we were in (app restarted / connection lost). */
@@ -181,7 +188,7 @@ export class GameConnection {
     this.room = room;
     this.leaving = false;
     const L = this.opts.listeners;
-    room.onMessage('state', (v: RoomView) => L.onState(v));
+    room.onMessage('state', (v: AnyRoomView) => L.onState(v));
     room.onMessage('avatars', (m: { avatars?: unknown }) => {
       if (Array.isArray(m?.avatars)) L.onAvatars?.(m.avatars.map((a) => (typeof a === 'string' && a ? a : null)));
     });

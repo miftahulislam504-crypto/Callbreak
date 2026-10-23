@@ -17,7 +17,7 @@ async function playOne(n: number) {
   let view: RoomView | null = null;
   const conn = new GameConnection({
     url: URL, storage, getIdentity: async () => ({ uid: `pt-${n}`, name: 'Human', idToken: null }),
-    listeners: { onState: (v) => (view = v), onError: (e) => { throw new Error(`server error ${e.code}`); }, onLink: () => {}, onClosed: () => {} },
+    listeners: { onState: (v) => (view = v as RoomView), onError: (e) => { throw new Error(`server error ${e.code}`); }, onLink: () => {}, onClosed: () => {} },
   });
   await conn.create({ isPrivate: true, targetScore: 29 });
   while (!view) await sleep(10);

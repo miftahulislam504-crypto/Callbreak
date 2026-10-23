@@ -25,12 +25,16 @@ export interface PlayerSeatProps {
   auto: boolean;
   isDealer: boolean;
   isTurn: boolean;
-  bid: number | null;
+  bid?: number | null;
   /** Rounds without bidding show only the tricks won. */
-  noBid: boolean;
-  won: number;
+  noBid?: boolean;
+  won?: number;
   handCount: number;
-  total: number;
+  total?: number;
+  /** Replaces the "won/bid" line (29 shows its own). */
+  scoreText?: string;
+  /** Replaces the running total next to it. */
+  subText?: string;
   timer: TurnTimer | null;
   /** Voice chat: this player is speaking right now (green ring). */
   speaking?: boolean;
@@ -109,7 +113,7 @@ function CardFan({ count, vertical }: { count: number; vertical: boolean }) {
 
 function Identity(p: PlayerSeatProps) {
   const tags = [p.isBot ? p.t('bot') : '', p.auto ? p.t('badgeAuto') : '', p.offline ? p.t('offline') : ''].filter(Boolean);
-  const score = p.noBid ? `${p.won}` : `${p.won}/${p.bid ?? '–'}`;
+  const score = p.scoreText ?? (p.noBid ? `${p.won ?? 0}` : `${p.won ?? 0}/${p.bid ?? '–'}`);
   return (
     <Pressable disabled={!p.onPress} onPress={p.onPress} hitSlop={4} style={{ alignItems: 'center', gap: 3 }}>
       <View style={{ width: RING_W, height: RING_H, alignItems: 'center', justifyContent: 'center', opacity: p.offline ? 0.55 : 1 }}>
@@ -131,7 +135,7 @@ function Identity(p: PlayerSeatProps) {
         <Text numberOfLines={1} style={{ color: CREAM, fontSize: 12, fontWeight: '800' }}>{p.name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
           <Text style={{ color: GOLD, fontSize: 13, fontWeight: '900' }}>{score}</Text>
-          <Text style={{ color: 'rgba(246,241,227,0.7)', fontSize: 10.5, fontWeight: '700' }}>{fmtPts(p.total)}</Text>
+          <Text style={{ color: 'rgba(246,241,227,0.7)', fontSize: 10.5, fontWeight: '700' }}>{p.subText ?? fmtPts(p.total ?? 0)}</Text>
         </View>
       </View>
       {tags.length > 0 ? <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 9.5, fontWeight: '700', textShadowColor: '#000', textShadowRadius: 2 }}>{tags.join(' · ')}</Text> : null}

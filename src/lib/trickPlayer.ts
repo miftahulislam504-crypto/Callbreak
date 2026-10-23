@@ -1,7 +1,7 @@
 // Plays TableEvents one after another (so a burst of server states still animates in order).
 // Framework-free: the React hook is a thin useSyncExternalStore wrapper.
-import { diffGame, type TableEvent } from './tableEvents';
-import type { Card, GameView } from './types';
+import { diffGame, type TableEvent, type TrickSource } from './tableEvents';
+import type { Card } from './types';
 
 export interface ShownCard {
   key: string;
@@ -29,7 +29,7 @@ export const DEFAULT_TIMING: Timing = { playMs: 260, holdMs: 850, sweepMs: 380 }
 
 export class TrickPlayer {
   private snap: TrickSnapshot;
-  private prev: GameView | null;
+  private prev: TrickSource | null;
   private queue: TableEvent[] = [];
   private busy = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -37,7 +37,7 @@ export class TrickPlayer {
   private listeners = new Set<() => void>();
 
   constructor(
-    initial: GameView | null,
+    initial: TrickSource | null,
     private timing: Timing = DEFAULT_TIMING,
   ) {
     this.prev = initial;
@@ -51,7 +51,7 @@ export class TrickPlayer {
 
   getSnapshot = (): TrickSnapshot => this.snap;
 
-  update(next: GameView | null): void {
+  update(next: TrickSource | null): void {
     if (!next) {
       this.hardReset();
       this.prev = null;
