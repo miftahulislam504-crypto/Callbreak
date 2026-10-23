@@ -1,6 +1,6 @@
 // When should this phone be in the voice channel? A pure decision, so it can be tested in Node
 // (no React Native imports). The rules are section 5 of the voice plan.
-import type { RoomView } from '../types';
+import type { CommonRoomView } from '../types';
 
 /**
  * What the player asked for. 'default' follows the room: private rooms join by themselves,
@@ -20,12 +20,12 @@ export const BACKGROUND_GRACE_MS = 30_000;
  * Humans sitting at the table and online right now (bots never use voice). I always count myself: if my own
  * game connection blips, the voice call has its own reconnect and should not be torn down and rebuilt.
  */
-export function connectedHumans(view: RoomView): number {
+export function connectedHumans(view: CommonRoomView): number {
   return view.seats.filter((s) => s.occupied && !s.isBot && (s.connected || s.seat === view.mySeat)).length;
 }
 
 export interface VoicePlanInput {
-  view: RoomView | null;
+  view: CommonRoomView | null;
   choice: VoiceChoice;
   /** The app has been in the background longer than BACKGROUND_GRACE_MS. */
   away: boolean;

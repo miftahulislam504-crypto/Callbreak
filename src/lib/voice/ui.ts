@@ -1,5 +1,5 @@
 // What the voice button shows. A pure function of the voice store and the room, so it can be tested in Node.
-import type { RoomView } from '../types';
+import type { CommonRoomView } from '../types';
 import { connectedHumans, MIN_VOICE_HUMANS, voicePlan, type VoiceChoice } from './plan';
 
 /**
@@ -15,7 +15,7 @@ export type VoiceButtonState = 'hidden' | 'disabled' | 'join' | 'connecting' | '
 
 export interface VoiceButtonInput {
   available: boolean;
-  view: RoomView | null;
+  view: CommonRoomView | null;
   status: 'off' | 'connecting' | 'on' | 'error';
   micOn: boolean;
   choice: VoiceChoice;
@@ -43,7 +43,7 @@ export function canLeaveVoice(state: VoiceButtonState): boolean {
 }
 
 /** Tapping another player's seat can mute them: only a human, not me, and only while I am in voice. */
-export function canMuteSeat(view: RoomView, seat: number, voiceOn: boolean): boolean {
+export function canMuteSeat(view: CommonRoomView, seat: number, voiceOn: boolean): boolean {
   const s = view.seats[seat];
   return voiceOn && !!s && s.occupied && !s.isBot && seat !== view.mySeat;
 }
