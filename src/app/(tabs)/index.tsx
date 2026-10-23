@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Text } from '@/components/text';
 import { CardFan, EmptyCards, GameButton, LogoMark, RoundIconButton, SeatDots } from '@/components/gameui';
 import { GameSwitch } from '@/components/GameSwitch';
 import { Avatar, Banner, MenuBackdrop, Row } from '@/components/kit';

@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
-import { CREAM, GOLD, WOOD, WOOD_LINE } from '@/constants/palette';
+import { Text } from '@/components/text';
+import { CREAM, GOLD, GOLD_DEEP, INK, ON_GOLD, WOOD, WOOD_LINE } from '@/constants/palette';
 import { isNoBidRound } from '@/lib/rules';
 import { canMuteSeat } from '@/lib/voice/ui';
 import { useRoom } from '@/state/room';
@@ -54,7 +55,7 @@ export function MuteMenu({
       <View
         style={{
           position: 'absolute', width, zIndex: 41, borderRadius: 14, padding: 10, gap: 8, ...pos,
-          backgroundColor: '#0B2F21', borderWidth: 1.5, borderColor: GOLD,
+          backgroundColor: INK, borderWidth: 1.5, borderColor: GOLD,
         }}>
         <Text numberOfLines={1} style={{ color: CREAM, fontWeight: '800', fontSize: 13, textAlign: 'center' }}>{name}</Text>
         <Pressable
@@ -194,9 +195,9 @@ export function Table({
           style={{
             position: 'absolute', left: w / 2 - 160, width: 320, bottom: handTop + 6, alignItems: 'center',
             paddingVertical: 5, borderRadius: 16, backgroundColor: myTurn ? GOLD : 'rgba(20,12,4,0.65)',
-            borderWidth: 1, borderColor: myTurn ? '#C99A2E' : 'rgba(255,255,255,0.12)',
+            borderWidth: 1, borderColor: myTurn ? GOLD_DEEP : 'rgba(255,255,255,0.12)',
           }}>
-          <Text numberOfLines={1} style={{ color: myTurn ? '#2A1B00' : CREAM, fontWeight: '800', fontSize: 13 }}>{status}</Text>
+          <Text numberOfLines={1} style={{ color: myTurn ? ON_GOLD : CREAM, fontWeight: '800', fontSize: 13 }}>{status}</Text>
         </View>
       ) : null}
 

@@ -1,10 +1,11 @@
-import { BalooDa2_700Bold, BalooDa2_800ExtraBold } from '@expo-google-fonts/baloo-da-2';
+import { BalooDa2_600SemiBold, BalooDa2_700Bold, BalooDa2_800ExtraBold } from '@expo-google-fonts/baloo-da-2';
 import { useFonts } from 'expo-font';
 import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
+import { BG_DEEP } from '@/constants/palette';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { SocialOverlay } from '@/components/SocialOverlay';
 import { AuthProvider, useAuth } from '@/lib/auth';
@@ -17,8 +18,8 @@ SplashScreen.preventAutoHideAsync();
 
 function Gate() {
   const { status, uid, profile } = useAuth();
-  // Menu font. If it fails to load, carry on with the system font rather than blocking the app.
-  const [fontsLoaded, fontError] = useFonts({ BalooDa2_700Bold, BalooDa2_800ExtraBold });
+  // The game's one typeface (see constants/fonts.ts). If it fails to load, carry on with the system font rather than blocking the app.
+  const [fontsLoaded, fontError] = useFonts({ BalooDa2_600SemiBold, BalooDa2_700Bold, BalooDa2_800ExtraBold });
   const bootstrap = useRoom((s) => s.bootstrap);
   const foreground = useRoom((s) => s.foreground);
 
@@ -52,7 +53,7 @@ function Gate() {
   if (status === 'loading' || !(fontsLoaded || fontError)) return null;
   return (
     <>
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#06241A' } }}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: BG_DEEP } }}>
         <Stack.Protected guard={status === 'in'}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="lobby" options={{ gestureEnabled: false }} />

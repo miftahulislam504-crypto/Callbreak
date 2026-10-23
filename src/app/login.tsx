@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { txt } from '@/constants/fonts';
+import { CardFan, LogoMark } from '@/components/gameui';
+import { Text } from '@/components/text';
 import { Banner, Button, Card, Field, MenuBackdrop } from '@/components/kit';
-import { BG_DEEP, CREAM, GOLD, MUTED } from '@/constants/palette';
+import { BG_DEEP, MUTED } from '@/constants/palette';
 import { useAuth } from '@/lib/auth';
 import { LIMITS } from '@/lib/env';
 import { useT } from '@/lib/i18n';
@@ -32,16 +35,11 @@ export default function Login() {
     <SafeAreaView style={{ flex: 1, backgroundColor: BG_DEEP }}>
       <MenuBackdrop />
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 24, paddingHorizontal: 28 }}>
-        {/* Left: the title */}
-        <View style={{ flex: 1, gap: 10 }}>
-          <View style={{ flexDirection: 'row', gap: 6 }}>
-            <Text style={{ color: CREAM, fontSize: 34 }}>♠</Text>
-            <Text style={{ color: '#FF6B70', fontSize: 34 }}>♥</Text>
-            <Text style={{ color: CREAM, fontSize: 34 }}>♣</Text>
-            <Text style={{ color: '#FF6B70', fontSize: 34 }}>♦</Text>
-          </View>
-          <Text style={{ color: GOLD, fontSize: 44, fontWeight: '900' }}>{t('appName')}</Text>
-          <Text style={{ color: MUTED, fontSize: 16 }}>{t('tagline')}</Text>
+        {/* Left: the game's face, same logo and fanned hand as the home page */}
+        <View style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+          <LogoMark title={t('appName')} />
+          <CardFan width={50} />
+          <Text style={[txt(16, false), { color: MUTED, textAlign: 'center' }]}>{t('tagline')}</Text>
         </View>
 
         {/* Right: sign in */}

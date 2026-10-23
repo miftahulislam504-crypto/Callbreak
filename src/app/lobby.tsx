@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Share, Text, View } from 'react-native';
+import { Pressable, ScrollView, Share, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Text } from '@/components/text';
 import { GameButton } from '@/components/gameui';
 import { Avatar, Banner, Card, MenuBackdrop, PillButton, Row } from '@/components/kit';
 import { InviteFriendsModal } from '@/components/InviteFriendsModal';
@@ -12,7 +13,7 @@ import { SeatFriendButton } from '@/components/SeatFriendButton';
 import { SettingPicker } from '@/components/target-picker';
 import { SeatMuteButton, VoiceButton } from '@/components/table/VoiceButton';
 import { txt } from '@/constants/fonts';
-import { BG_DEEP, CARD_BLACK, CREAM, FELT, GOLD, GREEN_OK, MUTED } from '@/constants/palette';
+import { BG_DEEP, CARD_BLACK, CREAM, FELT, GOLD, GOLD_EDGE, GREEN_FACE, GREEN_OK, IVORY, MUTED, PANEL, ROSE } from '@/constants/palette';
 import { gameInfo } from '@/lib/games';
 import { errorText, useT } from '@/lib/i18n';
 import { gameIdOf, isPoker } from '@/lib/types';
@@ -87,12 +88,12 @@ export default function Lobby() {
               accessibilityLabel={t('tapToCopy')}
               style={{
                 flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingLeft: 14, paddingRight: 10, borderRadius: 16,
-                backgroundColor: '#FFFDF7', borderWidth: 2, borderColor: GOLD,
+                backgroundColor: IVORY, borderWidth: 2, borderColor: GOLD,
               }}>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[txt(12.5, false), { color: '#6B6A60' }]}>{t('roomId')}</Text>
                 <Text numberOfLines={1} adjustsFontSizeToFit style={[txt(38), { color: CARD_BLACK, letterSpacing: 6 }]}>{view.roomCode}</Text>
-                <Text style={[txt(12, false), { color: copied ? '#1B8F5E' : '#6B6A60' }]}>{copied ? t('copied') : t('tapToCopy')}</Text>
+                <Text style={[txt(12, false), { color: copied ? GREEN_FACE : '#6B6A60' }]}>{copied ? t('copied') : t('tapToCopy')}</Text>
               </View>
               <Pressable
                 onPress={() => void Share.share({ message: t('shareMsg', { code: view.roomCode }) })}
@@ -101,7 +102,7 @@ export default function Lobby() {
                 accessibilityLabel={t('share')}
                 style={({ pressed }) => ({
                   width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: GOLD, borderBottomWidth: pressed ? 2 : 4, borderBottomColor: '#A9791A',
+                  backgroundColor: GOLD, borderBottomWidth: pressed ? 2 : 4, borderBottomColor: GOLD_EDGE,
                 })}>
                 <Ionicons name="share-social" size={22} color="#2A1B00" />
               </Pressable>
@@ -174,7 +175,7 @@ export default function Lobby() {
                   key={s.seat}
                   style={{
                     flex: 1, minWidth: 0, borderRadius: 14, alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, paddingHorizontal: 4, gap: 4,
-                    backgroundColor: '#0F3F2C', borderWidth: 2, borderColor: mine ? GOLD : 'rgba(255,255,255,0.16)',
+                    backgroundColor: PANEL, borderWidth: 2, borderColor: mine ? GOLD : 'rgba(255,255,255,0.16)',
                   }}>
                   <View style={{ alignItems: 'center', gap: 2, alignSelf: 'stretch' }}>
                     <View style={{ padding: 2, borderRadius: 11, borderWidth: 3, borderColor: talking ? GREEN_OK : 'transparent' }}>
@@ -239,7 +240,7 @@ function SeatIconButton({ icon, label, onPress, danger = false }: { icon: IconNa
         backgroundColor: danger ? 'rgba(229,72,77,0.22)' : 'rgba(255,255,255,0.12)',
         borderWidth: 1, borderColor: danger ? 'rgba(229,72,77,0.5)' : 'rgba(255,255,255,0.2)', opacity: pressed ? 0.7 : 1,
       })}>
-      <Ionicons name={icon} size={18} color={danger ? '#FF9A9E' : CREAM} />
+      <Ionicons name={icon} size={18} color={danger ? ROSE : CREAM} />
     </Pressable>
   );
 }

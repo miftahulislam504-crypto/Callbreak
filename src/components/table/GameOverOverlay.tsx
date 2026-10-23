@@ -1,19 +1,15 @@
-import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
 
-import { ACCENT, CARD_RED, CREAM, GOLD, MUTED } from '@/constants/palette';
+import { PANEL_FRAME } from '@/constants/ui';
+import { PanelShine } from '@/components/frame';
+import { Button } from '@/components/kit';
+import { Text } from '@/components/text';
+import { CREAM, GOLD, MUTED } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
 import { fmtPts } from '@/lib/rules';
 import type { GameView, RoomView } from '@/lib/types';
 
 const MEDAL = ['🥇', '🥈', '🥉', '4'];
-
-function Btn({ title, onPress, bg }: { title: string; onPress: () => void; bg: string }) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => ({ backgroundColor: bg, borderRadius: 12, minHeight: 42, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
-      <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14.5 }}>{title}</Text>
-    </Pressable>
-  );
-}
 
 export function GameOverOverlay({
   view, game, t, onRematch, onScores, onLeave,
@@ -28,7 +24,8 @@ export function GameOverOverlay({
   const isHost = view.mySeat === view.hostSeat;
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: Math.min(700, width - 60), maxHeight: height - 20, flexDirection: 'row', gap: 16, backgroundColor: '#0B2F21', borderRadius: 22, padding: 16, borderWidth: 2, borderColor: '#C99A2E' }}>
+      <View style={[PANEL_FRAME, { width: Math.min(700, width - 60), maxHeight: height - 20, flexDirection: 'row', gap: 16, padding: 16 }]}>
+        <PanelShine />
         {/* left: result */}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <Text style={{ fontSize: 54 }}>{iWon ? '🏆' : '🎴'}</Text>
@@ -49,9 +46,9 @@ export function GameOverOverlay({
             ))}
           </ScrollView>
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-            {isHost ? <Btn title={t('rematch')} onPress={onRematch} bg={ACCENT} /> : <Text style={{ color: MUTED, fontSize: 12.5, alignSelf: 'center' }}>{t('waitHostRematch')}</Text>}
-            <Btn title={t('scoreSheet')} onPress={onScores} bg="#2B4A3C" />
-            <Btn title={t('leave')} onPress={onLeave} bg={CARD_RED} />
+            {isHost ? <Button compact variant="gold" title={t('rematch')} onPress={onRematch} /> : <Text style={{ color: MUTED, fontSize: 12.5, alignSelf: 'center' }}>{t('waitHostRematch')}</Text>}
+            <Button compact variant="secondary" title={t('scoreSheet')} onPress={onScores} />
+            <Button compact variant="danger" title={t('leave')} onPress={onLeave} />
           </View>
         </View>
       </View>

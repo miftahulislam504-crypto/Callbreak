@@ -1,10 +1,11 @@
 import { Redirect, router } from 'expo-router';
 import { type ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Banner, MenuBackdrop, PillButton } from '@/components/kit';
-import { BG_DEEP, CREAM, GOLD, LINE, MUTED } from '@/constants/palette';
+import { Text } from '@/components/text';
+import { Banner, MenuBackdrop, PageHeader } from '@/components/kit';
+import { BG_DEEP, CREAM, GOLD, LINE, MUTED, PANEL } from '@/constants/palette';
 import { errorText, useT } from '@/lib/i18n';
 import { useRoom } from '@/state/room';
 
@@ -22,13 +23,7 @@ export function MenuPage({ title, hint, children }: { title: string; hint?: stri
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: BG_DEEP }}>
       <MenuBackdrop />
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 }}>
-        <PillButton label={`‹ ${t('back')}`} onPress={goHome} />
-        <View style={{ flex: 1 }}>
-          <Text numberOfLines={1} style={{ color: CREAM, fontSize: 22, fontWeight: '800' }}>{title}</Text>
-          {hint ? <Text numberOfLines={1} style={{ color: MUTED, fontSize: 12.5 }}>{hint}</Text> : null}
-        </View>
-      </View>
+      <PageHeader title={title} hint={hint} backLabel={t('back')} onBack={goHome} />
 
       <View style={{ paddingHorizontal: 16, gap: 6 }}>
         {server === 'waking' ? <Banner tone="info" text={t('serverWaking')} /> : null}
@@ -55,7 +50,7 @@ export function MenuTile({
       onPress={onPress}
       style={({ pressed }) => ({
         flex: 1, minWidth: 0, borderRadius: 18, padding: 14, justifyContent: 'center', gap: 4,
-        backgroundColor: highlight ? '#12573C' : '#0F3F2C',
+        backgroundColor: highlight ? '#12573C' : PANEL,
         borderWidth: 1.5, borderColor: highlight ? 'rgba(242,193,78,0.55)' : LINE,
         opacity: muted ? 0.8 : 1,
         transform: [{ scale: pressed ? 0.98 : 1 }],

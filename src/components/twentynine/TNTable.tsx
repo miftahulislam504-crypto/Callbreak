@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
+import { Text } from '@/components/text';
 import { Hand, handVisibleHeight } from '@/components/table/Hand';
 import { PlayerSeat, type SeatSide } from '@/components/table/PlayerSeat';
 import { MuteMenu, Wood } from '@/components/table/Table';
 import type { TurnTimer } from '@/components/table/TimerBar';
 import { TrickArea, trickAreaSize, trickCardWidth } from '@/components/table/TrickArea';
-import { CREAM, GOLD } from '@/constants/palette';
+import { CREAM, GOLD, GOLD_DEEP, ON_GOLD } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
 import type { ShownCard } from '@/lib/trickPlayer';
 import type { Card, TNGameView, TNRoomView } from '@/lib/types';
@@ -120,9 +121,9 @@ export function TNTable({
             hitSlop={8}
             style={({ pressed }) => ({
               paddingHorizontal: 18, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
-              backgroundColor: GOLD, borderWidth: 2, borderColor: '#C99A2E', opacity: pressed ? 0.85 : 1,
+              backgroundColor: GOLD, borderWidth: 2, borderColor: GOLD_DEEP, opacity: pressed ? 0.85 : 1,
             })}>
-            <Text style={{ color: '#2A1B00', fontWeight: '900', fontSize: 14 }}>{t('tnAskTrump')}</Text>
+            <Text style={{ color: ON_GOLD, fontWeight: '900', fontSize: 14 }}>{t('tnAskTrump')}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -134,9 +135,9 @@ export function TNTable({
           style={{
             position: 'absolute', left: w / 2 - 160, width: 320, bottom: handTop + 6, alignItems: 'center',
             paddingVertical: 5, borderRadius: 16, backgroundColor: myTurn ? GOLD : 'rgba(20,12,4,0.65)',
-            borderWidth: 1, borderColor: myTurn ? '#C99A2E' : 'rgba(255,255,255,0.12)',
+            borderWidth: 1, borderColor: myTurn ? GOLD_DEEP : 'rgba(255,255,255,0.12)',
           }}>
-          <Text numberOfLines={1} style={{ color: myTurn ? '#2A1B00' : CREAM, fontWeight: '800', fontSize: 13 }}>{status}</Text>
+          <Text numberOfLines={1} style={{ color: myTurn ? ON_GOLD : CREAM, fontWeight: '800', fontSize: 13 }}>{status}</Text>
         </View>
       ) : null}
 

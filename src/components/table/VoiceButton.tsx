@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 
-import { CREAM, DANGER, GOLD, GREEN_OK, LINE, MUTED } from '@/constants/palette';
+import { Text } from '@/components/text';
+import { CREAM, DANGER, GOLD, GOLD_LINE, GREEN_OK, LINE, MUTED, ROSE } from '@/constants/palette';
 import { type T, useT } from '@/lib/i18n';
 import { isVoiceAvailable } from '@/lib/voice/engine';
 import { canLeaveVoice, canMuteSeat, voiceButtonState, type VoiceButtonState } from '@/lib/voice/ui';
@@ -58,10 +59,8 @@ export function VoiceButton({ variant }: { variant: 'table' | 'menu' }) {
     }
   };
 
-  const h = variant === 'table' ? 32 : 36;
-  const base = variant === 'table'
-    ? { bg: 'rgba(20,12,4,0.62)', border: 'rgba(255,255,255,0.18)' }
-    : { bg: 'rgba(255,255,255,0.10)', border: LINE };
+  const h = 36;
+  const base = { bg: 'rgba(0,0,0,0.28)', border: GOLD_LINE };
   const look = chipLook(state, iSpeak, base);
 
   return (
@@ -72,7 +71,7 @@ export function VoiceButton({ variant }: { variant: 'table' | 'menu' }) {
         accessibilityRole="button"
         style={({ pressed }) => ({
           flexDirection: 'row', alignItems: 'center', gap: 6, height: h, minWidth: 40, paddingHorizontal: 12, borderRadius: h / 2,
-          justifyContent: 'center', backgroundColor: look.bg, borderWidth: 1, borderColor: look.border,
+          justifyContent: 'center', backgroundColor: look.bg, borderWidth: 1.5, borderColor: look.border,
           opacity: state === 'disabled' ? 0.5 : pressed ? 0.75 : 1,
         })}>
         {state === 'connecting' ? <ActivityIndicator size="small" color={GOLD} /> : <Ionicons name={look.icon} size={17} color={look.color} />}
@@ -86,7 +85,7 @@ export function VoiceButton({ variant }: { variant: 'table' | 'menu' }) {
           accessibilityRole="button"
           style={({ pressed }) => ({
             width: h, height: h, borderRadius: h / 2, alignItems: 'center', justifyContent: 'center',
-            backgroundColor: base.bg, borderWidth: 1, borderColor: base.border, opacity: pressed ? 0.7 : 1,
+            backgroundColor: base.bg, borderWidth: 1.5, borderColor: base.border, opacity: pressed ? 0.7 : 1,
           })}>
           <Ionicons name="close" size={17} color={CREAM} />
         </Pressable>
@@ -115,9 +114,9 @@ function chipLook(state: VoiceButtonState, speaking: boolean, base: { bg: string
     case 'live':
       return { icon: 'mic', color: GREEN_OK, bg: speaking ? 'rgba(52,195,143,0.5)' : 'rgba(52,195,143,0.2)', border: GREEN_OK, label: 'micLive' };
     case 'muted':
-      return { icon: 'mic-off', color: '#FF9A9E', bg: base.bg, border: base.border, label: 'micMuted' };
+      return { icon: 'mic-off', color: ROSE, bg: base.bg, border: base.border, label: 'micMuted' };
     case 'error':
-      return { icon: 'refresh', color: '#FF9A9E', bg: 'rgba(229,72,77,0.22)', border: 'rgba(229,72,77,0.5)', label: 'voiceRetry' };
+      return { icon: 'refresh', color: ROSE, bg: 'rgba(229,72,77,0.22)', border: 'rgba(229,72,77,0.5)', label: 'voiceRetry' };
     case 'connecting':
       return { icon: 'mic-outline', color: GOLD, bg: base.bg, border: base.border, label: null };
     default: // join, disabled
@@ -143,7 +142,7 @@ export function SeatMuteButton({ seat }: { seat: number }) {
         backgroundColor: muted ? 'rgba(229,72,77,0.22)' : 'rgba(255,255,255,0.10)',
         borderWidth: 1, borderColor: muted ? 'rgba(229,72,77,0.5)' : LINE, opacity: pressed ? 0.7 : 1,
       })}>
-      <Ionicons name={muted ? 'volume-mute' : 'volume-high'} size={18} color={muted ? '#FF9A9E' : MUTED} />
+      <Ionicons name={muted ? 'volume-mute' : 'volume-high'} size={18} color={muted ? ROSE : MUTED} />
     </Pressable>
   );
 }

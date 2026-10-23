@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, ScrollView, Text, View } from 'react-native';
+import { Modal, ScrollView, View } from 'react-native';
 
+import { PANEL_FRAME, R } from '@/constants/ui';
+import { PanelShine } from '@/components/frame';
+import { Text } from '@/components/text';
 import { Avatar, Button, PillButton, Row } from '@/components/kit';
-import { CREAM, GOLD, LINE, MUTED } from '@/constants/palette';
+import { CREAM, GOLD, LINE, MUTED, ROSE, SCRIM } from '@/constants/palette';
 import { useT } from '@/lib/i18n';
 import { REINVITE_COOLDOWN_MS } from '@/lib/socialLogic';
 import { useSocial } from '@/state/social';
@@ -54,12 +57,10 @@ export function InviteFriendsModal({
       statusBarTranslucent
       supportedOrientations={['landscape', 'landscape-left', 'landscape-right']}
       onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <View style={{ flex: 1, backgroundColor: SCRIM, alignItems: 'center', justifyContent: 'center', padding: 16 }}>
         <View
-          style={{
-            width: '100%', maxWidth: 520, maxHeight: '92%', borderRadius: 18, padding: 14, gap: 10,
-            backgroundColor: '#0F3F2C', borderWidth: 1.5, borderColor: 'rgba(242,193,78,0.4)',
-          }}>
+          style={[PANEL_FRAME, { width: '100%', maxWidth: 520, maxHeight: '92%', borderRadius: R.lg, padding: 14, gap: 10 }]}>
+          <PanelShine radius={R.lg} />
           <Row style={{ justifyContent: 'space-between' }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: CREAM, fontSize: 19, fontWeight: '800' }}>{t('inviteFriends')}</Text>
@@ -68,7 +69,7 @@ export function InviteFriendsModal({
             <PillButton label={t('close')} onPress={onClose} />
           </Row>
 
-          {failed ? <Text style={{ color: '#FF8A8D', fontSize: 13 }}>{t('inviteFailed')}</Text> : null}
+          {failed ? <Text style={{ color: ROSE, fontSize: 13 }}>{t('inviteFailed')}</Text> : null}
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {friends.length === 0 ? (

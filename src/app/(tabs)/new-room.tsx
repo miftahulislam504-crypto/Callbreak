@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Switch, Text, View } from 'react-native';
+import { Switch, View } from 'react-native';
 
+import { Text } from '@/components/text';
 import { Button, Card, Field, Row } from '@/components/kit';
 import { MenuPage } from '@/components/menu';
 import { GameSwitch } from '@/components/GameSwitch';

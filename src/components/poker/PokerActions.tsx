@@ -1,29 +1,43 @@
 import { useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
-import { CREAM, GOLD, MUTED } from '@/constants/palette';
+import { R, TONES, type Tone } from '@/constants/ui';
+import { Gloss } from '@/components/frame';
+import { Text } from '@/components/text';
+import { CREAM, GOLD, IVORY, MUTED } from '@/constants/palette';
 import { hapticTap } from '@/lib/haptics';
 import type { T } from '@/lib/i18n';
 import type { LegalActions, PokerActionType, PokerGameView } from '@/lib/types';
 
 const TRACK_H = 28;
 
-function Btn({ label, sub, bg, fg = '#fff', onPress, flex = 1, disabled = false }: {
-  label: string; sub?: string; bg: string; fg?: string; onPress: () => void; flex?: number; disabled?: boolean;
+function Btn({ label, sub, tone, onPress, flex = 1, disabled = false }: {
+  label: string; sub?: string; tone: Tone; onPress: () => void; flex?: number; disabled?: boolean;
 }) {
+  const c = TONES[tone];
   return (
     <Pressable
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={() => {
         hapticTap();
         onPress();
       }}
-      style={({ pressed }) => ({
-        flex, height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6,
-        backgroundColor: bg, borderBottomWidth: pressed ? 2 : 4, borderBottomColor: 'rgba(0,0,0,0.3)', opacity: disabled ? 0.4 : pressed ? 0.9 : 1,
-      })}>
-      <Text numberOfLines={1} adjustsFontSizeToFit style={{ color: fg, fontWeight: '900', fontSize: 15 }}>{label}</Text>
-      {sub ? <Text numberOfLines={1} style={{ color: fg, opacity: 0.85, fontSize: 11, fontWeight: '800' }}>{sub}</Text> : null}
+      style={{ flex, opacity: disabled ? 0.4 : 1 }}>
+      {({ pressed }) => (
+        <View style={{ borderRadius: R.sm, backgroundColor: c.edge, paddingBottom: 4 }}>
+          <View
+            style={{
+              height: 46, borderRadius: R.sm, backgroundColor: c.face, borderWidth: 1.5, borderColor: c.rim, overflow: 'hidden',
+              alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6, transform: [{ translateY: pressed ? 3 : 0 }],
+            }}>
+            <Gloss radius={R.sm} />
+            <Text numberOfLines={1} adjustsFontSizeToFit style={{ color: c.text, fontWeight: '900', fontSize: 15 }}>{label}</Text>
+            {sub ? <Text numberOfLines={1} style={{ color: c.text, opacity: 0.85, fontSize: 11, fontWeight: '800' }}>{sub}</Text> : null}
+          </View>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -47,7 +61,7 @@ function Slider({ min, max, value, onChange }: { min: number; max: number; value
       <View style={{ height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.2)' }}>
         <View style={{ width: `${frac * 100}%`, height: 8, borderRadius: 4, backgroundColor: GOLD }} />
       </View>
-      <View style={{ position: 'absolute', left: `${frac * 100}%`, marginLeft: -12, width: 24, height: 24, borderRadius: 12, backgroundColor: '#FFFDF7', borderWidth: 3, borderColor: GOLD }} />
+      <View style={{ position: 'absolute', left: `${frac * 100}%`, marginLeft: -12, width: 24, height: 24, borderRadius: 12, backgroundColor: IVORY, borderWidth: 3, borderColor: GOLD }} />
     </View>
   );
 }
@@ -107,8 +121,8 @@ export function PokerActions({
           ))}
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Btn label={t('pkBack')} bg="#2B4A3C" onPress={() => setOpen(false)} flex={1} />
-          <Btn label={raiseTo >= max ? t('pkAllIn') : `${raiseLabel} ${raiseTo}`} bg={GOLD} fg="#2A1B00" onPress={confirm} flex={2} />
+          <Btn label={t('pkBack')} tone="dark" onPress={() => setOpen(false)} flex={1} />
+          <Btn label={raiseTo >= max ? t('pkAllIn') : `${raiseLabel} ${raiseTo}`} tone="gold" onPress={confirm} flex={2} />
         </View>
       </View>
     );
@@ -116,16 +130,15 @@ export function PokerActions({
 
   return (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      <Btn label={t('pkFold')} bg="#A01E24" onPress={() => onAct('fold')} />
+      <Btn label={t('pkFold')} tone="danger" onPress={() => onAct('fold')} />
       {actions.canCheck ? (
-        <Btn label={t('pkCheck')} bg="#1B8F5E" onPress={() => onAct('check')} />
+        <Btn label={t('pkCheck')} tone="green" onPress={() => onAct('check')} />
       ) : (
-        <Btn label={t('pkCall')} sub={String(actions.callAmount)} bg="#1B8F5E" onPress={() => onAct('call')} />
+        <Btn label={t('pkCall')} sub={String(actions.callAmount)} tone="green" onPress={() => onAct('call')} />
       )}
       <Btn
         label={raiseLabel}
-        bg={GOLD}
-        fg="#2A1B00"
+        tone="gold"
         disabled={!actions.canRaise}
         onPress={() => {
           setRaiseTo(min);

@@ -1,30 +1,30 @@
 import { Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Banner } from '@/components/kit';
+import { Text } from '@/components/text';
+import { Banner, Button, PillButton } from '@/components/kit';
 import { PokerScreen } from '@/components/poker/PokerScreen';
 import { BidSheet } from '@/components/table/BidSheet';
 import { GameOverOverlay } from '@/components/table/GameOverOverlay';
 import { useDealClock, useTrickDisplay, useTurnTimer } from '@/components/table/hooks';
+import { LeaveDialog } from '@/components/table/LeaveDialog';
 import { RoundEndOverlay } from '@/components/table/RoundEndOverlay';
 import { ScoreSheet } from '@/components/table/ScoreSheet';
 import { Table } from '@/components/table/Table';
 import { VoiceButton } from '@/components/table/VoiceButton';
 import { TwentyNineScreen } from '@/components/twentynine/TwentyNineScreen';
-import { CREAM, GOLD } from '@/constants/palette';
+import { GOLD } from '@/constants/palette';
+import { HUD_PLATE } from '@/constants/ui';
 import { hapticTurn } from '@/lib/haptics';
 import { errorText, useT } from '@/lib/i18n';
 import { isNoBidRound } from '@/lib/rules';
 import { isCallBreak, isPoker, isTwentyNine, type Card } from '@/lib/types';
 import { useRoom } from '@/state/room';
 
-const chip = {
-  paddingHorizontal: 12, height: 32, borderRadius: 16, alignItems: 'center' as const, justifyContent: 'center' as const,
-  backgroundColor: 'rgba(20,12,4,0.62)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
-};
+const chip = HUD_PLATE;
 
 /** Which game screen to show: each game keeps its own table, sheets and overlays. */
 export default function Game() {
@@ -116,12 +116,8 @@ function CallBreakGame() {
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <VoiceButton variant="table" />
-            <Pressable onPress={() => setScores(true)} hitSlop={6} style={chip}>
-              <Text style={{ color: CREAM, fontWeight: '800', fontSize: 13 }}>{t('scoreSheet')}</Text>
-            </Pressable>
-            <Pressable onPress={confirmLeave} hitSlop={6} style={[chip, { backgroundColor: 'rgba(160,30,36,0.7)' }]}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>{t('leave')}</Text>
-            </Pressable>
+            <PillButton label={t('scoreSheet')} onPress={() => setScores(true)} />
+            <PillButton tone="danger" label={t('leave')} onPress={confirmLeave} />
           </View>
         </View>
 
@@ -134,19 +130,13 @@ function CallBreakGame() {
 
         {showReadyButton ? (
           <View pointerEvents="box-none" style={{ position: 'absolute', right: 14, top: 64, zIndex: 15 }}>
-            <Pressable
+            <Button
+              compact
+              variant={amReady ? 'secondary' : 'gold'}
               disabled={amReady}
+              title={amReady ? t('waitingOthers') : game.round <= 1 || isNoBidRound(game.round) ? t('readyPlay') : t('readyBid')}
               onPress={() => send('ready')}
-              hitSlop={8}
-              style={({ pressed }) => ({
-                paddingHorizontal: 18, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center',
-                backgroundColor: amReady ? 'rgba(20,12,4,0.7)' : GOLD, borderWidth: 2, borderColor: amReady ? 'rgba(255,255,255,0.2)' : '#C99A2E',
-                opacity: pressed ? 0.85 : 1,
-              })}>
-              <Text style={{ color: amReady ? CREAM : '#2A1B00', fontWeight: '900', fontSize: 15 }}>
-                {amReady ? t('waitingOthers') : game.round <= 1 || isNoBidRound(game.round) ? t('readyPlay') : t('readyBid')}
-              </Text>
-            </Pressable>
+            />
           </View>
         ) : null}
 
@@ -164,22 +154,7 @@ function CallBreakGame() {
         ) : null}
       </View>
 
-      <Modal visible={confirmingLeave} transparent animationType="fade" supportedOrientations={['landscape', 'landscape-left', 'landscape-right']} onRequestClose={() => setConfirmingLeave(false)}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.55)' }}>
-          <View style={{ width: 340, maxWidth: '90%', borderRadius: 18, padding: 18, gap: 12, backgroundColor: '#0B2F21', borderWidth: 2, borderColor: '#C99A2E' }}>
-            <Text style={{ color: CREAM, fontSize: 18, fontWeight: '900' }}>{t('leaveConfirmTitle')}</Text>
-            <Text style={{ color: 'rgba(246,241,227,0.8)', fontSize: 13.5 }}>{t('leaveConfirmBody')}</Text>
-            <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'flex-end' }}>
-              <Pressable onPress={() => setConfirmingLeave(false)} style={[chip, { height: 40, paddingHorizontal: 18 }]}>
-                <Text style={{ color: CREAM, fontWeight: '800', fontSize: 14 }}>{t('stay')}</Text>
-              </Pressable>
-              <Pressable onPress={doLeave} style={[chip, { height: 40, paddingHorizontal: 18, backgroundColor: 'rgba(160,30,36,0.9)' }]}>
-                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>{t('leave')}</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <LeaveDialog visible={confirmingLeave} onStay={() => setConfirmingLeave(false)} onLeave={doLeave} t={t} />
 
       <ScoreSheet visible={scores} onClose={() => setScores(false)} view={view} game={game} t={t} />
     </SafeAreaView>

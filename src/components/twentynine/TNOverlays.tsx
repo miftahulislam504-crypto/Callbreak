@@ -1,7 +1,11 @@
-import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Modal, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 
+import { PANEL_FRAME } from '@/constants/ui';
+import { PanelShine } from '@/components/frame';
+import { Button, PillButton } from '@/components/kit';
+import { Text } from '@/components/text';
 import { useCountdownSeconds } from '@/components/table/hooks';
-import { ACCENT, CARD_BLACK, CARD_RED, CREAM, GOLD, GREEN_OK, MUTED } from '@/constants/palette';
+import { CARD_BLACK, CARD_RED, CREAM, GOLD, GREEN_OK, MUTED, SCRIM } from '@/constants/palette';
 import { SUIT_SYMBOL } from '@/lib/cards';
 import type { T } from '@/lib/i18n';
 import type { Suit, TNGameView, TNRoomView } from '@/lib/types';
@@ -24,7 +28,8 @@ export function TNRoundEndOverlay({ view, game, t }: { view: TNRoomView; game: T
   const myTeam = teamOfSeat(view.mySeat);
   return (
     <View style={[dim, { backgroundColor: 'rgba(0,0,0,0.55)' }]}>
-      <View style={{ width: Math.min(560, width - 80), backgroundColor: '#0B2F21', borderRadius: 20, padding: 14, gap: 8, borderWidth: 2, borderColor: '#C99A2E' }}>
+      <View style={[PANEL_FRAME, { width: Math.min(560, width - 80), padding: 14, gap: 8 }]}>
+        <PanelShine />
         <Text style={{ color: GOLD, fontSize: 20, fontWeight: '900', textAlign: 'center' }}>{t('roundOver', { n: r.round })}</Text>
         <View style={{ alignItems: 'center', gap: 2 }}>
           <Text style={{ color: CREAM, fontWeight: '800' }}>
@@ -63,14 +68,6 @@ export function TNRoundEndOverlay({ view, game, t }: { view: TNRoomView; game: T
   );
 }
 
-function Btn({ title, onPress, bg }: { title: string; onPress: () => void; bg: string }) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => ({ backgroundColor: bg, borderRadius: 12, minHeight: 42, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
-      <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14.5 }}>{title}</Text>
-    </Pressable>
-  );
-}
-
 export function TNGameOverOverlay({
   view, game, t, onRematch, onScores, onLeave,
 }: { view: TNRoomView; game: TNGameView; t: T; onRematch: () => void; onScores: () => void; onLeave: () => void }) {
@@ -83,7 +80,8 @@ export function TNGameOverOverlay({
   const order = winTeam === 1 ? [1, 0] : [0, 1]; // the winning team first
   return (
     <View style={[dim, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
-      <View style={{ width: Math.min(700, width - 60), maxHeight: height - 20, flexDirection: 'row', gap: 16, backgroundColor: '#0B2F21', borderRadius: 22, padding: 16, borderWidth: 2, borderColor: '#C99A2E' }}>
+      <View style={[PANEL_FRAME, { width: Math.min(700, width - 60), maxHeight: height - 20, flexDirection: 'row', gap: 16, padding: 16 }]}>
+        <PanelShine />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <Text style={{ fontSize: 54 }}>{iWon ? '🏆' : '🎴'}</Text>
           <Text style={{ color: GOLD, fontSize: 24, fontWeight: '900', textAlign: 'center' }}>{iWon ? t('youWon') : t('gameOver')}</Text>
@@ -101,9 +99,9 @@ export function TNGameOverOverlay({
             ))}
           </View>
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-            {isHost ? <Btn title={t('rematch')} onPress={onRematch} bg={ACCENT} /> : <Text style={{ color: MUTED, fontSize: 12.5, alignSelf: 'center' }}>{t('waitHostRematch')}</Text>}
-            <Btn title={t('scoreSheet')} onPress={onScores} bg="#2B4A3C" />
-            <Btn title={t('leave')} onPress={onLeave} bg={CARD_RED} />
+            {isHost ? <Button compact variant="gold" title={t('rematch')} onPress={onRematch} /> : <Text style={{ color: MUTED, fontSize: 12.5, alignSelf: 'center' }}>{t('waitHostRematch')}</Text>}
+            <Button compact variant="secondary" title={t('scoreSheet')} onPress={onScores} />
+            <Button compact variant="danger" title={t('leave')} onPress={onLeave} />
           </View>
         </View>
       </View>
@@ -118,15 +116,14 @@ export function TNScoreSheet({
   const { width, height } = useWindowDimensions();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} supportedOrientations={['landscape', 'landscape-left', 'landscape-right']}>
-      <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.62)', alignItems: 'center', justifyContent: 'center' }}>
-        <Pressable style={{ width: Math.min(680, width - 60), maxHeight: height - 24, backgroundColor: '#0B2F21', borderRadius: 20, padding: 14, borderWidth: 2, borderColor: '#C99A2E' }}>
+      <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: SCRIM, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable style={[PANEL_FRAME, { width: Math.min(680, width - 60), maxHeight: height - 24, padding: 14 }]}>
+          <PanelShine />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <Text style={{ color: CREAM, fontSize: 18, fontWeight: '900' }}>
               {t('scoreSheet')} · <Text style={{ color: GOLD }}>{t('tnTargetChip', { n: game.targetScore })}</Text>
             </Text>
-            <Pressable onPress={onClose} hitSlop={8} style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.12)' }}>
-              <Text style={{ color: CREAM, fontWeight: '800' }}>{t('close')} ✕</Text>
-            </Pressable>
+            <PillButton label={`${t('close')} ✕`} onPress={onClose} />
           </View>
           <View style={{ flexDirection: 'row', paddingBottom: 4 }}>
             <Text style={{ width: 30, color: MUTED, fontSize: 11 }}>#</Text>

@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { CARD_BACK, CARD_BLACK, CARD_RED } from '@/constants/palette';
+import { Text } from '@/components/text';
+import { CARD_BACK, CARD_BLACK, CARD_RED, GOLD, IVORY } from '@/constants/palette';
 import { SUIT_SYMBOL, isRed, rankLabel } from '@/lib/cards';
 import type { Card } from '@/lib/types';
 
@@ -37,7 +38,7 @@ export function PlayingCard({
   return (
     <View
       style={[
-        { width, height, borderRadius: radius, backgroundColor: '#FFFDF7', borderWidth: glow ? 2.5 : 1, borderColor: glow ? '#F2C14E' : '#CFCABD' },
+        { width, height, borderRadius: radius, backgroundColor: IVORY, borderWidth: glow ? 2.5 : 1, borderColor: glow ? GOLD : '#CFCABD' },
         shadow,
       ]}>
       {/* top-left index */}

@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Avatar, Button, Card, CardTitle, Chip, Field, MenuBackdrop, PillButton, Row } from '@/components/kit';
-import { BG_DEEP, CREAM, MUTED } from '@/constants/palette';
+import { Text } from '@/components/text';
+import { Avatar, Button, Card, CardTitle, Chip, Field, MenuBackdrop, PageHeader, Row } from '@/components/kit';
+import { BG_DEEP, CREAM, MUTED, ROSE } from '@/constants/palette';
 import { useAuth } from '@/lib/auth';
 import { pickAvatar } from '@/lib/avatarImage';
 import { LIMITS, SERVER_URL } from '@/lib/env';
@@ -45,11 +46,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: BG_DEEP }}>
       <MenuBackdrop />
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 }}>
-        <PillButton label={`‹ ${t('back')}`} onPress={() => router.back()} />
-        <Avatar name={profile?.name ?? '?'} uri={profile?.avatar} size={42} />
-        <Text style={{ color: CREAM, fontSize: 22, fontWeight: '800' }}>{t('profileTitle')}</Text>
-      </View>
+      <PageHeader title={t('profileTitle')} backLabel={t('back')} onBack={() => router.back()} right={<Avatar name={profile?.name ?? '?'} uri={profile?.avatar} size={42} />} />
 
       <View style={{ flex: 1, flexDirection: 'row', gap: 12, paddingHorizontal: 16 }}>
         <ScrollView style={col} contentContainerStyle={{ gap: 12, paddingBottom: 14 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -68,7 +65,7 @@ export default function ProfileScreen() {
                 ) : null}
               </View>
             </Row>
-            <Text style={{ color: photoError ? '#FF8A8D' : MUTED, fontSize: 12 }}>{photoError ? t('photoFailed') : t('photoHint')}</Text>
+            <Text style={{ color: photoError ? ROSE : MUTED, fontSize: 12 }}>{photoError ? t('photoFailed') : t('photoHint')}</Text>
           </Card>
           <Card>
             <Field label={t('yourName')} value={name} onChangeText={(s) => { setName(s); setSaved(false); }} maxLength={LIMITS.maxName} />

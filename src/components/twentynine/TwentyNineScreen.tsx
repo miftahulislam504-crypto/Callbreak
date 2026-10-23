@@ -1,14 +1,16 @@
 import { Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Banner } from '@/components/kit';
+import { Text } from '@/components/text';
+import { Banner, PillButton } from '@/components/kit';
 import { useTrickDisplay, useTurnTimer } from '@/components/table/hooks';
 import { LeaveDialog } from '@/components/table/LeaveDialog';
 import { VoiceButton } from '@/components/table/VoiceButton';
-import { CARD_RED, CREAM, GOLD } from '@/constants/palette';
+import { CREAM, GOLD, ROSE } from '@/constants/palette';
+import { HUD_PLATE } from '@/constants/ui';
 import { SUIT_SYMBOL } from '@/lib/cards';
 import { hapticTurn } from '@/lib/haptics';
 import { errorText, useT } from '@/lib/i18n';
@@ -19,10 +21,7 @@ import { TNGameOverOverlay, TNRoundEndOverlay, TNScoreSheet, teamOfSeat } from '
 import { TNBidSheet, TNTrumpSheet } from './TNSheets';
 import { TNTable } from './TNTable';
 
-const chip = {
-  paddingHorizontal: 12, height: 32, borderRadius: 16, alignItems: 'center' as const, justifyContent: 'center' as const,
-  backgroundColor: 'rgba(20,12,4,0.62)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
-};
+const chip = HUD_PLATE;
 const signed = (n: number): string => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : '0');
 
 /** The 29 game screen: table, header chips, the bid / trump sheets and the round / game over overlays. */
@@ -127,19 +126,15 @@ export function TwentyNineScreen({ view }: { view: TNRoomView }) {
                   {game.need !== game.contract ? ` (${t('tnNeedChip', { n: game.need })})` : ''}
                 </Text>
                 {trumpLine ? (
-                  <Text style={{ color: game.trumpSuit ? (trumpRed ? '#FF8A8F' : CREAM) : 'rgba(246,241,227,0.7)', fontSize: 12, fontWeight: '800' }}>{trumpLine}</Text>
+                  <Text style={{ color: game.trumpSuit ? (trumpRed ? ROSE : CREAM) : 'rgba(246,241,227,0.7)', fontSize: 12, fontWeight: '800' }}>{trumpLine}</Text>
                 ) : null}
               </View>
             ) : null}
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <VoiceButton variant="table" />
-            <Pressable onPress={() => setScores(true)} hitSlop={6} style={chip}>
-              <Text style={{ color: CREAM, fontWeight: '800', fontSize: 13 }}>{t('scoreSheet')}</Text>
-            </Pressable>
-            <Pressable onPress={() => setConfirmingLeave(true)} hitSlop={6} style={[chip, { backgroundColor: 'rgba(160,30,36,0.7)' }]}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>{t('leave')}</Text>
-            </Pressable>
+            <PillButton label={t('scoreSheet')} onPress={() => setScores(true)} />
+            <PillButton tone="danger" label={t('leave')} onPress={() => setConfirmingLeave(true)} />
           </View>
         </View>
 

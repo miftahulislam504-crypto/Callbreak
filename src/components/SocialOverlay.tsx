@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { PANEL_FRAME, R } from '@/constants/ui';
+import { PanelShine } from '@/components/frame';
+import { Text } from '@/components/text';
 import { Avatar, Button } from '@/components/kit';
 import { CREAM, MUTED } from '@/constants/palette';
 import { hapticTurn } from '@/lib/haptics';
@@ -67,11 +70,8 @@ export function SocialOverlay() {
       pointerEvents="box-none"
       style={{ position: 'absolute', top: Math.max(insets.top, 8) + 4, left: 0, right: 0, alignItems: 'center', zIndex: 100, elevation: 20 }}>
       <View
-        style={{
-          width: '92%', maxWidth: 580, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16,
-          backgroundColor: '#0B3524', borderWidth: 1.5, borderColor: 'rgba(242,193,78,0.6)',
-          shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
-        }}>
+        style={[PANEL_FRAME, { width: '92%', maxWidth: 580, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: R.md }]}>
+        <PanelShine radius={R.md} />
         <Avatar name={name} uri={avatar} size={46} />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text numberOfLines={2} style={{ color: CREAM, fontWeight: '800', fontSize: 15 }}>

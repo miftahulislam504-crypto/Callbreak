@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
+import { Text } from '@/components/text';
 import { Avatar } from '@/components/kit';
 import { PlayingCard } from '@/components/table/PlayingCard';
 import { TimerBar, type TurnTimer } from '@/components/table/TimerBar';

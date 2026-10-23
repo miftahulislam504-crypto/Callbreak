@@ -1,6 +1,10 @@
-import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Modal, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 
-import { CARD_RED, CREAM, GOLD, GREEN_OK, MUTED } from '@/constants/palette';
+import { PillButton } from '@/components/kit';
+import { PANEL_FRAME } from '@/constants/ui';
+import { PanelShine } from '@/components/frame';
+import { Text } from '@/components/text';
+import { CARD_RED, CREAM, GOLD, GREEN_OK, MUTED, SCRIM } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
 import { fmtPts, isNoBidRound } from '@/lib/rules';
 import type { GameView, RoomView } from '@/lib/types';
@@ -16,16 +20,15 @@ export function ScoreSheet({
   const top = Math.max(...game.totals);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} supportedOrientations={['landscape', 'landscape-left', 'landscape-right']}>
-      <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.62)', alignItems: 'center', justifyContent: 'center' }}>
+      <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: SCRIM, alignItems: 'center', justifyContent: 'center' }}>
         <Pressable
-          style={{ width: Math.min(680, width - 60), maxHeight: height - 24, backgroundColor: '#0B2F21', borderRadius: 20, padding: 14, borderWidth: 2, borderColor: '#C99A2E' }}>
+          style={[PANEL_FRAME, { width: Math.min(680, width - 60), maxHeight: height - 24, padding: 14 }]}>
+          <PanelShine />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <Text style={{ color: CREAM, fontSize: 18, fontWeight: '900' }}>
               {t('scoreSheet')} · <Text style={{ color: GOLD }}>{t('targetReach', { n: game.targetScore })}</Text>
             </Text>
-            <Pressable onPress={onClose} hitSlop={8} style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.12)' }}>
-              <Text style={{ color: CREAM, fontWeight: '800' }}>{t('close')} ✕</Text>
-            </Pressable>
+            <PillButton label={`${t('close')} ✕`} onPress={onClose} />
           </View>
           <View style={{ flexDirection: 'row', paddingBottom: 4 }}>
             <Text style={{ width: 34, color: MUTED, fontSize: 11 }}>#</Text>

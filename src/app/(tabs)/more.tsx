@@ -1,5 +1,6 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
+import { Text } from '@/components/text';
 import { Card } from '@/components/kit';
 import { MenuPage } from '@/components/menu';
 import { MUTED } from '@/constants/palette';

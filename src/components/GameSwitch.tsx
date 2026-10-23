@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
+import { Text } from '@/components/text';
 import { txt } from '@/constants/fonts';
 import { CREAM, GOLD, LINE } from '@/constants/palette';
 import { GAME_LIST } from '@/lib/games';

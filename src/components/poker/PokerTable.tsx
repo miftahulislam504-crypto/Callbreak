@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
+import { Text } from '@/components/text';
 import { useCountdownSeconds } from '@/components/table/hooks';
 import { PlayingCard } from '@/components/table/PlayingCard';
 import type { TurnTimer } from '@/components/table/TimerBar';
-import { CREAM, FELT, GOLD, GREEN_OK, MUTED } from '@/constants/palette';
+import { CARD_RED, CREAM, FELT, GOLD, GREEN_OK, IVORY, MUTED } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
 import type { Card, LegalActions, PokerActionType, PokerGameView, PokerRoomView } from '@/lib/types';
 import { useRoom } from '@/state/room';
@@ -20,7 +21,7 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
 function BetChip({ amount, x, y }: { amount: number; x: number; y: number }) {
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: x - 30, top: y - 11, width: 60, height: 22, borderRadius: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: 'rgba(8,24,16,0.75)', borderWidth: 1, borderColor: 'rgba(242,193,78,0.5)' }}>
-      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#D9363E', borderWidth: 2, borderColor: '#FFFDF7' }} />
+      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: CARD_RED, borderWidth: 2, borderColor: IVORY }} />
       <Text style={{ color: CREAM, fontSize: 11.5, fontWeight: '900' }}>{amount}</Text>
     </View>
   );

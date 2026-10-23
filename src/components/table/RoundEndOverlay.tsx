@@ -1,5 +1,8 @@
-import { Text, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 
+import { PANEL_FRAME } from '@/constants/ui';
+import { PanelShine } from '@/components/frame';
+import { Text } from '@/components/text';
 import { CARD_RED, CREAM, GOLD, GREEN_OK, MUTED } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
 import { fmtPts, isNoBidRound } from '@/lib/rules';
@@ -18,7 +21,8 @@ export function RoundEndOverlay({ view, game, t }: { view: RoomView; game: GameV
   const noBid = isNoBidRound(r.round);
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: Math.min(560, width - 80), backgroundColor: '#0B2F21', borderRadius: 20, padding: 14, gap: 6, borderWidth: 2, borderColor: '#C99A2E' }}>
+      <View style={[PANEL_FRAME, { width: Math.min(560, width - 80), padding: 14, gap: 6 }]}>
+        <PanelShine />
         <Text style={{ color: GOLD, fontSize: 20, fontWeight: '900', textAlign: 'center' }}>{t('roundOver', { n: r.round })}</Text>
         {view.seats.map((s, i) => {
           const met = r.scores10[i] >= 0;

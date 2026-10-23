@@ -1,13 +1,15 @@
 import { Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Banner } from '@/components/kit';
+import { Text } from '@/components/text';
+import { Banner, PillButton } from '@/components/kit';
 import { LeaveDialog } from '@/components/table/LeaveDialog';
 import { VoiceButton } from '@/components/table/VoiceButton';
 import { GOLD } from '@/constants/palette';
+import { HUD_PLATE } from '@/constants/ui';
 import { hapticTurn } from '@/lib/haptics';
 import { errorText, useT } from '@/lib/i18n';
 import type { PokerActionType, PokerRoomView } from '@/lib/types';
@@ -16,10 +18,7 @@ import { useRoom } from '@/state/room';
 import { PokerGameOver } from './PokerOverlays';
 import { PokerTable } from './PokerTable';
 
-const chip = {
-  paddingHorizontal: 12, height: 32, borderRadius: 16, alignItems: 'center' as const, justifyContent: 'center' as const,
-  backgroundColor: 'rgba(8,24,16,0.7)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
-};
+const chip = HUD_PLATE;
 
 /** The poker screen: table, header, and the game-over overlay. */
 export function PokerScreen({ view }: { view: PokerRoomView }) {
@@ -72,9 +71,7 @@ export function PokerScreen({ view }: { view: PokerRoomView }) {
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <VoiceButton variant="table" />
-            <Pressable onPress={() => setConfirmingLeave(true)} hitSlop={6} style={[chip, { backgroundColor: 'rgba(160,30,36,0.7)' }]}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>{t('leave')}</Text>
-            </Pressable>
+            <PillButton tone="danger" label={t('leave')} onPress={() => setConfirmingLeave(true)} />
           </View>
         </View>
 

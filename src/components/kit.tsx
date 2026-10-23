@@ -1,14 +1,20 @@
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
-  ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput,
+  ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet,
   View, type StyleProp, type TextInputProps, type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Gloss } from '@/components/frame';
+import { Text, TextInput } from '@/components/text';
 import { ThemedText } from '@/components/themed-text';
-import { ACCENT, ACCENT_DARK, BG_DEEP, CREAM, DANGER, GOLD, GOLD_DEEP, LINE, MUTED, PANEL, PANEL_HI } from '@/constants/palette';
 import { txt } from '@/constants/fonts';
+import {
+  BG_DEEP, CREAM, DANGER, GOLD, GOLD_EDGE, GOLD_LINE, GOLD_LINE_SOFT, GOLD_RIM, MUTED, ON_GOLD, PANEL, ROSE,
+} from '@/constants/palette';
 import { Spacing } from '@/constants/theme';
+import { R, shadow, TITLE_SHADOW, TONES, type Tone } from '@/constants/ui';
+import { hapticTap } from '@/lib/haptics';
 import { Image } from 'expo-image';
 
 import { botAvatar } from '@/lib/botAvatars';
@@ -24,6 +30,8 @@ export function MenuBackdrop() {
     marginLeft: -d / 2, marginTop: -d / 2, backgroundColor: `rgba(31,160,106,${a})`,
   });
   const s = { position: 'absolute' as const, color: 'rgba(255,255,255,0.04)', fontWeight: '800' as const };
+  // Stacked dark bands at the top and bottom edge: a cheap soft vignette (no gradient library needed).
+  const bands = [16, 32, 52, 76];
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <View style={disc(980, 0.05)} />
@@ -34,7 +42,13 @@ export function MenuBackdrop() {
       <Text style={[s, { fontSize: 150, right: 30, top: -20, color: 'rgba(229,72,77,0.06)' }]}>♥</Text>
       <Text style={[s, { fontSize: 170, left: '38%', bottom: -70, color: 'rgba(229,72,77,0.05)' }]}>♦</Text>
       <Text style={[s, { fontSize: 140, right: -20, bottom: -30 }]}>♣</Text>
-      <View style={{ position: 'absolute', left: 6, right: 6, top: 6, bottom: 6, borderRadius: 24, borderWidth: 1.5, borderColor: 'rgba(242,193,78,0.16)' }} />
+      {bands.map((h) => (
+        <View key={`t${h}`} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: h, backgroundColor: 'rgba(0,0,0,0.06)' }} />
+      ))}
+      {bands.map((h) => (
+        <View key={`b${h}`} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: h, backgroundColor: 'rgba(0,0,0,0.06)' }} />
+      ))}
+      <View style={{ position: 'absolute', left: 6, right: 6, top: 6, bottom: 6, borderRadius: R.xl, borderWidth: 1.5, borderColor: GOLD_LINE_SOFT }} />
     </View>
   );
 }
@@ -62,8 +76,14 @@ export function Screen({
   );
 }
 
+/** A dark plate with a fine gold edge and a light catch on the top line. */
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  return <View style={[styles.card, style]}>{children}</View>;
+  return (
+    <View style={[styles.card, style]}>
+      <View pointerEvents="none" style={{ position: 'absolute', left: 18, right: 18, top: 0, height: 1.5, borderRadius: 1, backgroundColor: 'rgba(255,255,255,0.16)' }} />
+      {children}
+    </View>
+  );
 }
 
 /** Small gold heading with a suit mark, used on the home cards. */
@@ -72,13 +92,18 @@ export function CardTitle({ icon, title, hint }: { icon?: string; title: string;
     <View style={{ gap: 2 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         {icon ? <Text style={{ color: GOLD, fontSize: 18 }}>{icon}</Text> : null}
-        <Text style={[txt(18), { color: CREAM }]}>{title}</Text>
+        <Text style={[txt(18), { color: CREAM }, TITLE_SHADOW]}>{title}</Text>
       </View>
+      <View style={{ width: 30, height: 3, borderRadius: 2, backgroundColor: GOLD, opacity: 0.85, marginTop: 1 }} />
       {hint ? <Text style={[txt(12.5, false), { color: MUTED }]}>{hint}</Text> : null}
     </View>
   );
 }
 
+/**
+ * The standard button: the same chunky "game" button as on the home page (coloured face, thick edge, rim,
+ * gloss, sinks when pressed, taps buzz). Give it a size with `style` (flex / width); the height follows `compact`.
+ */
 export function Button({
   title, onPress, variant = 'primary', disabled, loading, style, compact,
 }: {
@@ -86,39 +111,61 @@ export function Button({
   disabled?: boolean; loading?: boolean; style?: StyleProp<ViewStyle>; compact?: boolean;
 }) {
   const off = disabled || loading;
-  const bg = variant === 'primary' ? ACCENT : variant === 'gold' ? GOLD : variant === 'danger' ? DANGER : PANEL_HI;
-  const edge = variant === 'primary' ? ACCENT_DARK : variant === 'gold' ? GOLD_DEEP : variant === 'danger' ? '#B3282D' : '#0B2E21';
-  const fg = variant === 'gold' ? '#2A1B00' : '#fff';
+  const tone: Tone = variant === 'primary' ? 'green' : variant === 'gold' ? 'gold' : variant === 'danger' ? 'danger' : 'dark';
+  const c = TONES[tone];
+  const radius = compact ? R.sm : R.md;
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={title}
       disabled={off}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        compact && { minHeight: 38, borderRadius: 11 },
-        { backgroundColor: bg, borderBottomColor: edge, opacity: off ? 0.5 : 1, transform: [{ translateY: pressed ? 2 : 0 }], borderBottomWidth: pressed ? 2 : 4 },
-        style,
-      ]}>
-      {loading ? <ActivityIndicator color={fg} /> : <Text style={[txt(compact ? 14 : 17), { color: fg }]}>{title}</Text>}
+      onPress={() => {
+        hapticTap();
+        onPress();
+      }}
+      style={[{ opacity: off ? 0.5 : 1 }, style]}>
+      {({ pressed }) => (
+        <View style={{ borderRadius: radius, backgroundColor: c.edge, paddingBottom: compact ? 3 : 4 }}>
+          <View
+            style={{
+              minHeight: compact ? 38 : 46, borderRadius: radius, backgroundColor: c.face, borderWidth: 1.5, borderColor: c.rim,
+              overflow: 'hidden', alignItems: 'center', justifyContent: 'center', paddingHorizontal: compact ? 12 : Spacing.three,
+              transform: [{ translateY: pressed ? (compact ? 2 : 3) : 0 }],
+            }}>
+            <Gloss radius={radius} />
+            {loading ? <ActivityIndicator color={c.text} /> : <Text style={[txt(compact ? 14 : 17), { color: c.text, textAlign: 'center' }]}>{title}</Text>}
+          </View>
+        </View>
+      )}
     </Pressable>
   );
 }
 
+/** A choice pill (target score, language...). The picked one turns into a gold game button. */
 export function Chip({
   label, selected, onPress, disabled,
 }: { label: string; selected?: boolean; onPress: () => void; disabled?: boolean }) {
   return (
     <Pressable
       disabled={disabled}
-      onPress={onPress}
-      style={[styles.chip, selected ? { borderColor: GOLD, backgroundColor: 'rgba(242,193,78,0.16)' } : null, { opacity: disabled ? 0.4 : 1 }]}>
-      <Text style={[txt(14.5), { color: selected ? GOLD : CREAM }]}>{label}</Text>
+      onPress={() => {
+        hapticTap();
+        onPress();
+      }}
+      style={({ pressed }) => [
+        styles.chip,
+        selected
+          ? { backgroundColor: GOLD, borderColor: GOLD_RIM, borderBottomColor: GOLD_EDGE, borderBottomWidth: pressed ? 1.5 : 3.5 }
+          : { backgroundColor: 'rgba(0,0,0,0.26)', opacity: pressed ? 0.75 : 1 },
+        { opacity: disabled ? 0.4 : 1 },
+      ]}>
+      <Text style={[txt(14.5), { color: selected ? ON_GOLD : CREAM }]}>{label}</Text>
     </Pressable>
   );
 }
 
 export function Field({ label, ...props }: { label?: string } & TextInputProps) {
+  const [focus, setFocus] = useState(false);
   return (
     <View style={{ gap: Spacing.one }}>
       {label ? <ThemedText type="small" themeColor="textSecondary">{label}</ThemedText> : null}
@@ -126,7 +173,15 @@ export function Field({ label, ...props }: { label?: string } & TextInputProps) 
         placeholderTextColor="rgba(157,196,177,0.55)"
         selectionColor={GOLD}
         {...props}
-        style={[styles.input, props.style]}
+        onFocus={(e) => {
+          setFocus(true);
+          props.onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocus(false);
+          props.onBlur?.(e);
+        }}
+        style={[styles.input, focus && { borderColor: GOLD, backgroundColor: 'rgba(0,0,0,0.4)' }, props.style]}
       />
     </View>
   );
@@ -134,7 +189,7 @@ export function Field({ label, ...props }: { label?: string } & TextInputProps) 
 
 export function Banner({ text, onClose, tone = 'error' }: { text: string; onClose?: () => void; tone?: 'error' | 'info' }) {
   return (
-    <Pressable onPress={onClose} style={[styles.banner, tone === 'info' && { backgroundColor: '#2F5FD0' }]}>
+    <Pressable onPress={onClose} style={[styles.banner, tone === 'info' && { backgroundColor: '#2F5FD0', borderColor: '#9DB8FF' }]}>
       <ThemedText type="small" style={{ color: '#fff' }}>{text}</ThemedText>
     </Pressable>
   );
@@ -171,26 +226,54 @@ export function Row({ children, style }: { children: ReactNode; style?: StylePro
   return <View style={[{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }, style]}>{children}</View>;
 }
 
-/** Round icon-ish button for headers (back, settings...). */
+/** Small pill button for headers (back, leave, close...). */
 export function PillButton({ label, onPress, tone = 'plain' }: { label: string; onPress: () => void; tone?: 'plain' | 'danger' }) {
   return (
     <Pressable
-      onPress={onPress}
+      accessibilityRole="button"
+      onPress={() => {
+        hapticTap();
+        onPress();
+      }}
       hitSlop={6}
       style={({ pressed }) => ({
         paddingHorizontal: 14, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
-        backgroundColor: tone === 'danger' ? 'rgba(229,72,77,0.22)' : 'rgba(255,255,255,0.10)',
-        borderWidth: 1, borderColor: tone === 'danger' ? 'rgba(229,72,77,0.5)' : LINE, opacity: pressed ? 0.7 : 1,
+        backgroundColor: tone === 'danger' ? 'rgba(229,72,77,0.22)' : 'rgba(0,0,0,0.28)',
+        borderWidth: 1.5, borderColor: tone === 'danger' ? 'rgba(229,72,77,0.55)' : GOLD_LINE,
+        transform: [{ scale: pressed ? 0.95 : 1 }],
       })}>
-      <Text style={[txt(14), { color: tone === 'danger' ? '#FF9A9E' : CREAM }]}>{label}</Text>
+      <Text style={[txt(14), { color: tone === 'danger' ? ROSE : CREAM }]}>{label}</Text>
     </Pressable>
   );
 }
 
+/** Top bar of every menu page: back button, big title with a hint under it, and an optional right side. */
+export function PageHeader({
+  title, hint, backLabel, onBack, right,
+}: { title: string; hint?: string; backLabel: string; onBack: () => void; right?: ReactNode }) {
+  return (
+    <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 8, borderBottomWidth: 1.5, borderBottomColor: GOLD_LINE_SOFT }}>
+        <PillButton label={`‹ ${backLabel}`} onPress={onBack} />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text numberOfLines={1} style={[txt(24), { color: CREAM }, TITLE_SHADOW]}>{title}</Text>
+          {hint ? <Text numberOfLines={1} style={[txt(12.5, false), { color: MUTED }]}>{hint}</Text> : null}
+        </View>
+        {right}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  card: { borderRadius: 18, padding: 14, gap: 12, backgroundColor: PANEL, borderWidth: 1, borderColor: LINE },
-  button: { minHeight: 46, borderRadius: 13, paddingHorizontal: Spacing.three, alignItems: 'center', justifyContent: 'center' },
+  card: {
+    borderRadius: R.lg, padding: 14, gap: 12, backgroundColor: PANEL, borderWidth: 1.5, borderColor: GOLD_LINE_SOFT,
+    ...shadow(1),
+  },
   chip: { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.16)', borderRadius: 999, paddingHorizontal: 16, paddingVertical: 7, minWidth: 54, alignItems: 'center' },
-  input: { borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', backgroundColor: 'rgba(0,0,0,0.28)', color: CREAM, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: 16 },
-  banner: { backgroundColor: DANGER, borderRadius: 12, padding: 10 },
+  input: {
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.14)', backgroundColor: 'rgba(0,0,0,0.3)', color: CREAM,
+    borderRadius: R.sm, paddingHorizontal: 14, paddingVertical: 10, fontSize: 16,
+  },
+  banner: { backgroundColor: DANGER, borderRadius: R.sm, padding: 10, borderWidth: 1.5, borderColor: ROSE },
 });

@@ -1,8 +1,11 @@
 import { useEffect } from 'react';
-import { Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 
-import { CARD_BLACK, CARD_RED, CREAM, GOLD, GOLD_DEEP, MUTED } from '@/constants/palette';
+import { PANEL_FRAME } from '@/constants/ui';
+import { PanelShine } from '@/components/frame';
+import { Text } from '@/components/text';
+import { CARD_BLACK, CARD_RED, CREAM, GOLD, IVORY, IVORY_EDGE, MUTED } from '@/constants/palette';
 import { hapticTap } from '@/lib/haptics';
 import type { T } from '@/lib/i18n';
 import type { GameView } from '@/lib/types';
@@ -28,8 +31,8 @@ function BidCard({ n, i, w, onPress, t }: { n: number; i: number; w: number; onP
           onPress();
         }}
         style={({ pressed }) => ({
-          width: w, height: h, borderRadius: 12, backgroundColor: '#FFFDF7', borderWidth: 2,
-          borderColor: pressed ? GOLD : '#D9D3C2', alignItems: 'center', justifyContent: 'center',
+          width: w, height: h, borderRadius: 12, backgroundColor: IVORY, borderWidth: 2,
+          borderColor: pressed ? GOLD : IVORY_EDGE, alignItems: 'center', justifyContent: 'center',
           transform: [{ translateY: pressed ? -6 : 0 }, { scale: pressed ? 1.05 : 1 }],
           shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 4, shadowOffset: { width: 0, height: 3 }, elevation: 4,
         })}>
@@ -62,13 +65,13 @@ export function BidSheet({ game, onBid, t }: { game: GameView; onBid: (n: number
     <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.38)' }}>
       <Animated.View
         style={[
+          PANEL_FRAME,
           {
-            width: panelW, maxHeight: height - 40, borderRadius: 22, paddingVertical: 14, paddingHorizontal: pad, gap: 12, alignItems: 'center',
-            backgroundColor: '#0B2F21', borderWidth: 2, borderColor: GOLD_DEEP,
-            shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 12,
+            width: panelW, maxHeight: height - 40, paddingVertical: 14, paddingHorizontal: pad, gap: 12, alignItems: 'center',
           },
           panel,
         ]}>
+        <PanelShine />
         <View style={{ alignItems: 'center', gap: 2 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Text style={{ color: GOLD, fontSize: 16 }}>♠ ♥</Text>

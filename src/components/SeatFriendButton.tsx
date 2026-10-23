@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Text, type StyleProp, type ViewStyle } from 'react-native';
+import { type StyleProp, type ViewStyle } from 'react-native';
 
+import { Text } from '@/components/text';
 import { Button } from '@/components/kit';
 import { GREEN_OK, MUTED } from '@/constants/palette';
 import { useT } from '@/lib/i18n';

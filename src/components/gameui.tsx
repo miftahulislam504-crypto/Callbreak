@@ -1,21 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect } from 'react';
-import { Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 
 import { PlayingCard, CARD_RATIO } from '@/components/table/PlayingCard';
-import { CREAM, DANGER, GOLD, LINE } from '@/constants/palette';
+import { Gloss } from '@/components/frame';
+import { Text } from '@/components/text';
 import { txt } from '@/constants/fonts';
+import { BG_DEEP, CREAM, DANGER, GOLD, GOLD_LINE, GOLD_RIM, LINE } from '@/constants/palette';
+import { TONES } from '@/constants/ui';
 import { hapticTap } from '@/lib/haptics';
 import type { Card } from '@/lib/types';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
-
-const TONES = {
-  gold: { face: '#F2C14E', edge: '#A9791A', rim: '#FFE7A3', text: '#2A1B00', icon: '#2A1B00', badge: 'rgba(42,27,0,0.14)' },
-  green: { face: '#1B8F5E', edge: '#0A4A30', rim: '#4CCB95', text: '#FFFFFF', icon: '#FFFFFF', badge: 'rgba(0,0,0,0.2)' },
-  dark: { face: '#17563C', edge: '#082A1D', rim: 'rgba(255,255,255,0.14)', text: CREAM, icon: GOLD, badge: 'rgba(0,0,0,0.22)' },
-} as const;
 
 /**
  * A chunky "game" button: coloured face, thick bottom edge, glossy highlight, sinks when pressed.
@@ -46,8 +43,7 @@ export function GameButton({
               flex: 1, borderRadius: radius, backgroundColor: c.face, borderWidth: 1.5, borderColor: c.rim, overflow: 'hidden',
               justifyContent: 'center', paddingHorizontal: big ? 16 : 10, transform: [{ translateY: pressed ? (big ? 4 : 3) : 0 }],
             }}>
-            {/* gloss */}
-            <View pointerEvents="none" style={{ position: 'absolute', left: 6, right: 6, top: 3, height: '38%', borderRadius: radius, backgroundColor: 'rgba(255,255,255,0.18)' }} />
+            <Gloss radius={radius} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: big ? 12 : 8 }}>
               {icon ? (
                 <View
@@ -85,7 +81,7 @@ export function RoundIconButton({
       hitSlop={6}
       style={({ pressed }) => ({
         width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.28)', borderWidth: 1.5, borderColor: highlight ? GOLD : 'rgba(242,193,78,0.35)',
+        backgroundColor: 'rgba(0,0,0,0.28)', borderWidth: 1.5, borderColor: highlight ? GOLD : GOLD_LINE,
         transform: [{ scale: pressed ? 0.93 : 1 }],
       })}>
       <Ionicons name={icon} size={21} color={CREAM} />
@@ -93,7 +89,7 @@ export function RoundIconButton({
         <View
           style={{
             position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5,
-            backgroundColor: DANGER, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#06241A',
+            backgroundColor: DANGER, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: BG_DEEP,
           }}>
           <Text style={[txt(11), { color: '#fff', lineHeight: 14 }]}>{badge}</Text>
         </View>
@@ -111,7 +107,7 @@ export function SeatDots({ filled, total = 4 }: { filled: number; total?: number
           key={i}
           style={{
             width: 11, height: 11, borderRadius: 6,
-            backgroundColor: i < filled ? GOLD : 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: i < filled ? '#FFE7A3' : LINE,
+            backgroundColor: i < filled ? GOLD : 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: i < filled ? GOLD_RIM : LINE,
           }}
         />
       ))}
@@ -144,9 +140,9 @@ export function LogoMark({ title, compact = false }: { title: string; compact?: 
       </View>
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Text style={{ color: CREAM, fontSize: 14 }}>♠</Text>
-        <Text style={{ color: '#E5484D', fontSize: 14 }}>♥</Text>
+        <Text style={{ color: DANGER, fontSize: 14 }}>♥</Text>
         <Text style={{ color: CREAM, fontSize: 14 }}>♣</Text>
-        <Text style={{ color: '#E5484D', fontSize: 14 }}>♦</Text>
+        <Text style={{ color: DANGER, fontSize: 14 }}>♦</Text>
       </View>
     </View>
   );

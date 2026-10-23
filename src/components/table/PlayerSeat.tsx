@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
+import { Text } from '@/components/text';
 import { Avatar } from '@/components/kit';
 import { CREAM, GOLD, GREEN_OK } from '@/constants/palette';
 import type { T } from '@/lib/i18n';

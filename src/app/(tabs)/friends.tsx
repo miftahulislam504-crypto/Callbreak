@@ -1,12 +1,13 @@
 import * as Clipboard from 'expo-clipboard';
 import { Redirect } from 'expo-router';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Alert, Pressable, ScrollView, Share, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Avatar, Banner, Button, Card, CardTitle, Field, MenuBackdrop, PillButton, Row } from '@/components/kit';
+import { Text } from '@/components/text';
+import { Avatar, Banner, Button, Card, CardTitle, Field, MenuBackdrop, PageHeader, PillButton, Row } from '@/components/kit';
 import { goHome } from '@/components/menu';
-import { BG_DEEP, CREAM, GOLD, GREEN_OK, MUTED } from '@/constants/palette';
+import { BG_DEEP, CREAM, GOLD, GOLD_LINE, GREEN_OK, MUTED, ROSE } from '@/constants/palette';
 import { isFirebaseConfigured } from '@/lib/env';
 import { useT, type Key } from '@/lib/i18n';
 import { findByCode, type PublicProfile } from '@/lib/social';
@@ -129,10 +130,7 @@ export default function FriendsScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: BG_DEEP }}>
       <MenuBackdrop />
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 }}>
-        <PillButton label={`‹ ${t('back')}`} onPress={goHome} />
-        <Text style={{ color: CREAM, fontSize: 22, fontWeight: '800' }}>👥 {t('friendsTitle')}</Text>
-      </View>
+      <PageHeader title={`👥 ${t('friendsTitle')}`} backLabel={t('back')} onBack={goHome} />
 
       <View style={{ paddingHorizontal: 16, gap: 6 }}>
         {!isFirebaseConfigured ? <Banner tone="info" text={t('friendsNeedFirebase')} /> : null}
@@ -142,7 +140,7 @@ export default function FriendsScreen() {
       <View style={{ flex: 1, flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingTop: 4 }}>
         {/* Left: my code + add a friend */}
         <ScrollView style={col} contentContainerStyle={{ gap: 12, paddingBottom: 14 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <Card style={{ borderColor: 'rgba(242,193,78,0.35)' }}>
+          <Card style={{ borderColor: GOLD_LINE }}>
             <CardTitle icon="♠" title={t('myFriendCode')} hint={t('friendCodeHint')} />
             <Row style={{ justifyContent: 'space-between' }}>
               <Pressable onPress={() => void copyCode()} style={{ flex: 1 }} disabled={!friendCode}>
@@ -182,7 +180,7 @@ export default function FriendsScreen() {
                 )}
               </PersonRow>
             ) : null}
-            {msg ? <Text style={{ color: msg.ok ? GREEN_OK : '#FF8A8D', fontSize: 13 }}>{t(msg.key, msg.vars)}</Text> : null}
+            {msg ? <Text style={{ color: msg.ok ? GREEN_OK : ROSE, fontSize: 13 }}>{t(msg.key, msg.vars)}</Text> : null}
           </Card>
           <Text style={{ color: MUTED, fontSize: 12 }}>{t('pushHint')}</Text>
         </ScrollView>
@@ -190,7 +188,7 @@ export default function FriendsScreen() {
         {/* Right: requests, sent requests, friends */}
         <ScrollView style={col} contentContainerStyle={{ gap: 12, paddingBottom: 14 }} showsVerticalScrollIndicator={false}>
           {requests.length > 0 ? (
-            <Card style={{ borderColor: 'rgba(242,193,78,0.35)' }}>
+            <Card style={{ borderColor: GOLD_LINE }}>
               <CardTitle icon="✉" title={t('requestsTitle')} />
               {requests.map((r) => (
                 <PersonRow key={r.id} name={profiles[r.from]?.name ?? r.fromName} avatar={profiles[r.from]?.avatar}>
