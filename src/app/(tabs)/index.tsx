@@ -81,6 +81,7 @@ export default function Home() {
           </View>
         </Row>
         <Row style={{ gap: 10 }}>
+          <RoundIconButton icon="information-circle" label={t('rulesTitle')} onPress={() => router.push('/rules')} />
           <RoundIconButton icon="people" label={t('friends')} badge={badge} highlight={badge > 0} onPress={() => router.push('/friends')} />
           <RoundIconButton icon="settings-sharp" label={t('tabProfile')} onPress={() => router.push('/profile')} />
         </Row>
