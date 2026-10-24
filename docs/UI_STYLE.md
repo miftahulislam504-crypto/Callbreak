@@ -13,6 +13,7 @@ Everything else uses the same shared pieces, so a new screen looks right without
 | Page top bar | `PageHeader` (or `MenuPage`, which already has it) | `components/kit.tsx` |
 | Dialogs, sheets, overlays | `PANEL_FRAME` + `<PanelShine />` as first child | `constants/ui.ts`, `components/frame.tsx` |
 | Dim layer behind a dialog | `SCRIM` | `constants/palette.ts` |
+| "How to play" text (rules, examples) | `GUIDES` in `lib/rulesContent.ts`, shown by `(tabs)/rules.tsx`; keep it in step with the server engine | `lib/rulesContent.ts`, `components/rules.tsx` |
 
 Rules of thumb:
 

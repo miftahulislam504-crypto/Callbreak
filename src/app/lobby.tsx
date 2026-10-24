@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Share, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -68,6 +68,7 @@ export default function Lobby() {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <VoiceButton variant="menu" />
+          <PillButton label={`ⓘ ${t('rulesButton')}`} onPress={() => router.push({ pathname: '/rules', params: { game: gid } })} />
           <PillButton label={t('leave')} tone="danger" onPress={() => void leaveRoom()} />
         </View>
       </View>
