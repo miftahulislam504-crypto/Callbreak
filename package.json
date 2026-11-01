@@ -60,7 +60,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "node --import tsx --test test/*.test.ts"
+    "test": "node --import tsx --test test/*.test.ts",
+    "eas-build-pre-install": "npm install --package-lock-only --ignore-scripts --no-audit --no-fund"
   },
   "private": true
 }
