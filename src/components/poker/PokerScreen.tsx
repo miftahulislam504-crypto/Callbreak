@@ -10,7 +10,9 @@ import { LeaveDialog } from '@/components/table/LeaveDialog';
 import { VoiceButton } from '@/components/table/VoiceButton';
 import { GOLD } from '@/constants/palette';
 import { HUD_PLATE } from '@/constants/ui';
+import { useTurnTicks } from '@/components/table/useTableSounds';
 import { hapticTurn } from '@/lib/haptics';
+import { sfx } from '@/lib/sound';
 import { errorText, useT } from '@/lib/i18n';
 import type { PokerActionType, PokerRoomView } from '@/lib/types';
 import { useRoom } from '@/state/room';
@@ -33,8 +35,12 @@ export function PokerScreen({ view }: { view: PokerRoomView }) {
   // A nudge when it becomes your turn (once per street).
   const turnKey = myTurn ? `${game!.handNo}:${game!.street}:${game!.currentBet}` : null;
   useEffect(() => {
-    if (turnKey) hapticTurn();
+    if (turnKey) {
+      hapticTurn();
+      sfx('your_turn');
+    }
   }, [turnKey]);
+  useTurnTicks(myTurn, view.deadline, view.serverTime);
 
   const turnTimer = useMemo(() => {
     const g = view.game;
@@ -53,7 +59,11 @@ export function PokerScreen({ view }: { view: PokerRoomView }) {
       ? myTurn ? t('yourTurn') : t('turnOf', { name: turnName })
       : game.phase === 'handEnd' ? t('pkHandOver') : '';
 
-  const act = (type: PokerActionType, amount?: number) => send('act', amount === undefined ? { type } : { type, amount });
+  const act = (type: PokerActionType, amount?: number) => {
+    // chips for anything that puts money in, a flip for folding, a plain click for checking
+    sfx(type === 'fold' ? 'card_flip' : type === 'check' ? 'tap' : 'chips');
+    send('act', amount === undefined ? { type } : { type, amount });
+  };
 
   return (
     <SafeAreaView edges={['left', 'right']} style={{ flex: 1, backgroundColor: '#05281B' }}>

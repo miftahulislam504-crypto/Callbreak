@@ -38,6 +38,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": false,
+          "microphonePermission": "Call Break uses the microphone so you can talk to the other players at your table."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Choose a profile photo that other players see at the table."

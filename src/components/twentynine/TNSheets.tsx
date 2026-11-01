@@ -6,6 +6,7 @@ import { PanelShine } from '@/components/frame';
 import { Text } from '@/components/text';
 import { CARD_BLACK, CARD_RED, CREAM, GOLD, IVORY, IVORY_EDGE, MUTED, ROSE } from '@/constants/palette';
 import { hapticTap } from '@/lib/haptics';
+import { sfx } from '@/lib/sound';
 import type { T } from '@/lib/i18n';
 import { SUIT_SYMBOL } from '@/lib/cards';
 import type { Suit, TNGameView } from '@/lib/types';
@@ -44,6 +45,7 @@ export function TNBidSheet({ game, names, onBid, t }: { game: TNGameView; names:
                 disabled={!ok}
                 onPress={() => {
                   hapticTap();
+                  sfx('bid');
                   onBid(b);
                 }}
                 style={({ pressed }) => ({
@@ -86,6 +88,7 @@ export function TNTrumpSheet({ onPick, t }: { onPick: (s: Suit) => void; t: T })
               key={s}
               onPress={() => {
                 hapticTap();
+                sfx('select');
                 onPick(s);
               }}
               style={({ pressed }) => ({

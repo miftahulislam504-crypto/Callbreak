@@ -1,6 +1,6 @@
 import { BalooDa2_600SemiBold, BalooDa2_700Bold, BalooDa2_800ExtraBold } from '@expo-google-fonts/baloo-da-2';
 import { useFonts } from 'expo-font';
-import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
@@ -10,6 +10,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { SocialOverlay } from '@/components/SocialOverlay';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { isFirebaseConfigured } from '@/lib/env';
+import { initSound, setMusicWanted, sfx } from '@/lib/sound';
 import { useVoiceSync } from '@/lib/voice/useVoiceSync';
 import { useRoom } from '@/state/room';
 import { useSocial } from '@/state/social';
@@ -25,6 +26,24 @@ function Gate() {
 
   // Voice chat lives here (not on a screen) so it keeps running from the lobby into the game.
   useVoiceSync();
+
+  // Sound: read the saved switches once; the menu music plays everywhere except at the table, where the
+  // card sounds (and voice chat) should be all you hear.
+  const pathname = usePathname();
+  useEffect(() => {
+    void initSound();
+  }, []);
+  useEffect(() => {
+    setMusicWanted(!pathname.startsWith('/game'));
+  }, [pathname]);
+
+  // A ping when a friend request or a room invite arrives.
+  const waiting = useSocial((s) => s.incoming.filter((r) => !s.friendUids.includes(r.from)).length + s.invites.length);
+  const lastWaiting = useRef(waiting);
+  useEffect(() => {
+    if (waiting > lastWaiting.current) sfx('notify');
+    lastWaiting.current = waiting;
+  }, [waiting]);
 
   // Wake the server (free hosts sleep) and get back into the room we were in, then keep the
   // connection healthy whenever the app returns from the background.

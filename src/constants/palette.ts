@@ -44,3 +44,16 @@ export const SCRIM = 'rgba(0,0,0,0.58)';
 // Thin gold lines on plates / frames.
 export const GOLD_LINE = 'rgba(242,193,78,0.35)';
 export const GOLD_LINE_SOFT = 'rgba(242,193,78,0.18)';
+
+// ---- Card-room materials (menus use the same felt, wood rim and brass as the table) -------------------
+export const FELT_LIGHT = '#14724A';
+export const WOOD_RIM = '#9A6232';
+export const WOOD_RIM_DARK = '#6E4120';
+export const WOOD_DARK = '#5A3718';
+/** Warm light of the lamp hanging over the table (RGB, for rgba()). */
+export const LAMP_RGB = '255,214,138';
+// Lighter top of each button gradient (the face colour is the bottom).
+export const GOLD_TOP = '#FFD978';
+export const GREEN_TOP = '#33B67E';
+export const DARK_TOP = '#22704F';
+export const DANGER_TOP = '#F0656B';

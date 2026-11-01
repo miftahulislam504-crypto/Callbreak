@@ -1,6 +1,7 @@
 // Shared look of the game: corner radii, shadows, button tones and the frame of every dialog.
 import {
-  CREAM, DANGER_DEEP, GOLD, GOLD_DEEP, GOLD_EDGE, GOLD_RIM, GREEN_EDGE, GREEN_FACE, GREEN_RIM, INK, ON_GOLD, ROSE,
+  CREAM, DANGER_DEEP, DANGER_TOP, DARK_TOP, GOLD, GOLD_DEEP, GOLD_EDGE, GOLD_RIM, GOLD_TOP, GREEN_EDGE, GREEN_FACE,
+  GREEN_RIM, GREEN_TOP, INK, ON_GOLD, ROSE,
 } from './palette';
 
 /** Corner radii. Cards and panels use lg / xl, buttons md, inputs and small plates sm. */
@@ -24,14 +25,14 @@ export const TITLE_SHADOW = {
 } as const;
 
 /**
- * The chunky "game" button colours: a face, a thick darker edge underneath, a bright rim, and the
+ * The chunky "game" button colours: a face (with a lighter `top` it fades from), a thick darker edge underneath, a bright rim, and the
  * colours for the text, icon and icon badge. Used by both GameButton and the plain Button.
  */
 export const TONES = {
-  gold: { face: GOLD, edge: GOLD_EDGE, rim: GOLD_RIM, text: ON_GOLD, icon: ON_GOLD, badge: 'rgba(42,27,0,0.14)' },
-  green: { face: GREEN_FACE, edge: GREEN_EDGE, rim: GREEN_RIM, text: '#FFFFFF', icon: '#FFFFFF', badge: 'rgba(0,0,0,0.2)' },
-  dark: { face: '#17563C', edge: '#082A1D', rim: 'rgba(255,255,255,0.14)', text: CREAM, icon: GOLD, badge: 'rgba(0,0,0,0.22)' },
-  danger: { face: '#D6393F', edge: '#7E1A1F', rim: ROSE, text: '#FFFFFF', icon: '#FFFFFF', badge: 'rgba(0,0,0,0.2)' },
+  gold: { top: GOLD_TOP, face: GOLD, edge: GOLD_EDGE, rim: GOLD_RIM, text: ON_GOLD, icon: ON_GOLD, badge: 'rgba(42,27,0,0.14)' },
+  green: { top: GREEN_TOP, face: GREEN_FACE, edge: GREEN_EDGE, rim: GREEN_RIM, text: '#FFFFFF', icon: '#FFFFFF', badge: 'rgba(0,0,0,0.2)' },
+  dark: { top: DARK_TOP, face: '#17563C', edge: '#082A1D', rim: 'rgba(255,255,255,0.14)', text: CREAM, icon: GOLD, badge: 'rgba(0,0,0,0.22)' },
+  danger: { top: DANGER_TOP, face: '#D6393F', edge: '#7E1A1F', rim: ROSE, text: '#FFFFFF', icon: '#FFFFFF', badge: 'rgba(0,0,0,0.2)' },
 } as const;
 export type Tone = keyof typeof TONES;
 

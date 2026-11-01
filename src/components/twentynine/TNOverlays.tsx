@@ -1,13 +1,16 @@
+import { useEffect } from 'react';
 import { Modal, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { PANEL_FRAME } from '@/constants/ui';
 import { PanelShine } from '@/components/frame';
+import { Confetti } from '@/components/fx';
 import { Button, PillButton } from '@/components/kit';
 import { Text } from '@/components/text';
 import { useCountdownSeconds } from '@/components/table/hooks';
 import { CARD_BLACK, CARD_RED, CREAM, GOLD, GREEN_OK, MUTED, SCRIM } from '@/constants/palette';
 import { SUIT_SYMBOL } from '@/lib/cards';
 import type { T } from '@/lib/i18n';
+import { sfx } from '@/lib/sound';
 import type { Suit, TNGameView, TNRoomView } from '@/lib/types';
 
 export const teamSeats = (team: number): number[] => (team === 0 ? [0, 2] : [1, 3]);
@@ -23,6 +26,9 @@ export function TNRoundEndOverlay({ view, game, t }: { view: TNRoomView; game: T
   const { width } = useWindowDimensions();
   const secs = useCountdownSeconds(view.nextRoundAt, view.serverTime);
   const r = game.history[game.history.length - 1];
+  useEffect(() => {
+    sfx('round_end');
+  }, []);
   if (!r) return null;
   const dTeam = teamOfSeat(r.declarer);
   const myTeam = teamOfSeat(view.mySeat);
@@ -78,8 +84,12 @@ export function TNGameOverOverlay({
   const winTeam = tie ? -1 : teamOfSeat(winners[0] ?? 0);
   const isHost = view.mySeat === view.hostSeat;
   const order = winTeam === 1 ? [1, 0] : [0, 1]; // the winning team first
+  useEffect(() => {
+    sfx(iWon ? 'win' : 'lose');
+  }, [iWon]);
   return (
     <View style={[dim, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+      {iWon ? <Confetti /> : null}
       <View style={[PANEL_FRAME, { width: Math.min(700, width - 60), maxHeight: height - 20, flexDirection: 'row', gap: 16, padding: 16 }]}>
         <PanelShine />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 }}>

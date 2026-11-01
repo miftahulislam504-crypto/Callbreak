@@ -10,6 +10,7 @@ import { PokerScreen } from '@/components/poker/PokerScreen';
 import { BidSheet } from '@/components/table/BidSheet';
 import { GameOverOverlay } from '@/components/table/GameOverOverlay';
 import { useDealClock, useTrickDisplay, useTurnTimer } from '@/components/table/hooks';
+import { useDealSounds, useTrickSounds, useTurnTicks } from '@/components/table/useTableSounds';
 import { LeaveDialog } from '@/components/table/LeaveDialog';
 import { RoundEndOverlay } from '@/components/table/RoundEndOverlay';
 import { ScoreSheet } from '@/components/table/ScoreSheet';
@@ -21,6 +22,7 @@ import { HUD_PLATE } from '@/constants/ui';
 import { hapticTurn } from '@/lib/haptics';
 import { errorText, useT } from '@/lib/i18n';
 import { isNoBidRound } from '@/lib/rules';
+import { sfx } from '@/lib/sound';
 import { isCallBreak, isPoker, isTwentyNine, type Card } from '@/lib/types';
 import { useRoom } from '@/state/room';
 
@@ -55,8 +57,16 @@ function CallBreakGame() {
   // A nudge when it becomes your turn (once per turn: the key changes with your hand size).
   const turnKey = myTurn ? `${game.round}:${game.phase}:${game.handCounts[me]}` : null;
   useEffect(() => {
-    if (turnKey) hapticTurn();
+    if (turnKey) {
+      hapticTurn();
+      sfx('your_turn');
+    }
   }, [turnKey]);
+
+  // Table sounds: cards landing, the trick being swept, the deal, and the last seconds of your turn.
+  useTrickSounds(trick, me);
+  useDealSounds(dealClock, game?.round);
+  useTurnTicks(myTurn, view?.deadline ?? null, view?.serverTime ?? 0);
 
   useEffect(() => {
     if (!toast) return;

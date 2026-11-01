@@ -1,20 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, Share, View } from 'react-native';
+import Animated, { ZoomIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/text';
 import { GameButton } from '@/components/gameui';
-import { Avatar, Banner, Card, MenuBackdrop, PillButton, Row } from '@/components/kit';
+import { Avatar, Banner, Card, MenuBackdrop, PillButton, Row, TablePanel } from '@/components/kit';
 import { InviteFriendsModal } from '@/components/InviteFriendsModal';
 import { SeatFriendButton } from '@/components/SeatFriendButton';
 import { SettingPicker } from '@/components/target-picker';
 import { SeatMuteButton, VoiceButton } from '@/components/table/VoiceButton';
 import { txt } from '@/constants/fonts';
-import { BG_DEEP, CARD_BLACK, CREAM, FELT, GOLD, GOLD_EDGE, GREEN_FACE, GREEN_OK, IVORY, MUTED, PANEL, ROSE } from '@/constants/palette';
+import { BG_DEEP, CARD_BLACK, CREAM, GOLD, GOLD_EDGE, GREEN_FACE, GREEN_OK, IVORY, MUTED, PANEL, ROSE } from '@/constants/palette';
+import { shadow } from '@/constants/ui';
 import { gameInfo } from '@/lib/games';
+import { sfx } from '@/lib/sound';
 import { errorText, useT } from '@/lib/i18n';
 import { gameIdOf, isPoker } from '@/lib/types';
 import { useRoom } from '@/state/room';
@@ -29,6 +32,15 @@ export default function Lobby() {
   const socialActive = useSocial((s) => s.active);
   const speaking = useVoice((s) => s.speaking);
   const voiceOn = useVoice((s) => s.status === 'on');
+
+  // A chime when someone sits down, a softer one when someone leaves (not for the seats already taken when we arrive).
+  const seated = view ? view.seats.filter((s) => s.occupied).length : 0;
+  const lastSeated = useRef(seated);
+  useEffect(() => {
+    if (seated > lastSeated.current) sfx('join');
+    else if (seated < lastSeated.current) sfx('leave');
+    lastSeated.current = seated;
+  }, [seated]);
 
   if (!view) return <Redirect href="/" />;
   if (view.status !== 'lobby') return <Redirect href="/game" />;
@@ -89,7 +101,7 @@ export default function Lobby() {
               accessibilityLabel={t('tapToCopy')}
               style={{
                 flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingLeft: 14, paddingRight: 10, borderRadius: 16,
-                backgroundColor: IVORY, borderWidth: 2, borderColor: GOLD,
+                backgroundColor: IVORY, borderWidth: 2, borderColor: GOLD, ...shadow(2),
               }}>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[txt(12.5, false), { color: '#6B6A60' }]}>{t('roomId')}</Text>
@@ -130,6 +142,7 @@ export default function Lobby() {
               <GameButton
                 tone="gold"
                 icon="play"
+                shine
                 title={enough ? t('start') : t('startWithBots')}
                 style={{ flex: 1.3 }}
                 onPress={() => send('start', { fillBots: !enough })}
@@ -143,12 +156,7 @@ export default function Lobby() {
         </View>
 
         {/* Right: the table, with the four players as cards */}
-        <View
-          style={{
-            flex: 1.15, minWidth: 0, borderRadius: 28, borderWidth: 6, borderColor: '#9A6232', backgroundColor: FELT,
-            padding: 10, gap: 8,
-          }}>
-          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 22, borderWidth: 2, borderColor: 'rgba(0,0,0,0.28)' }} />
+        <TablePanel style={{ flex: 1.15, minWidth: 0 }} innerStyle={{ padding: 10, gap: 8 }}>
           <View style={{ alignSelf: 'center', paddingHorizontal: 14, paddingVertical: 2, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.3)' }}>
             <Text style={[txt(14), { color: GOLD }]}>{t('playersOfMax', { n: filled, max: view.seats.length })}</Text>
           </View>
@@ -172,11 +180,12 @@ export default function Lobby() {
                 );
               }
               return (
-                <View
+                <Animated.View
                   key={s.seat}
+                  entering={ZoomIn.duration(260)}
                   style={{
                     flex: 1, minWidth: 0, borderRadius: 14, alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, paddingHorizontal: 4, gap: 4,
-                    backgroundColor: PANEL, borderWidth: 2, borderColor: mine ? GOLD : 'rgba(255,255,255,0.16)',
+                    backgroundColor: PANEL, borderWidth: 2, borderColor: mine ? GOLD : 'rgba(255,255,255,0.16)', ...shadow(1),
                   }}>
                   <View style={{ alignItems: 'center', gap: 2, alignSelf: 'stretch' }}>
                     <View style={{ padding: 2, borderRadius: 11, borderWidth: 3, borderColor: talking ? GREEN_OK : 'transparent' }}>
@@ -195,12 +204,12 @@ export default function Lobby() {
                     {!s.isBot && !mine ? <SeatFriendButton uid={s.uid} style={{ alignSelf: 'stretch', paddingHorizontal: 4 }} /> : null}
                     {isHost && s.isBot ? <SeatIconButton icon="close" label={t('removeBot')} danger onPress={() => send('removeBot', { seat: s.seat })} /> : null}
                   </View>
-                </View>
+                </Animated.View>
               );
             })}
           </View>
           ))}
-        </View>
+        </TablePanel>
       </View>
 
       <InviteFriendsModal visible={inviteOpen} onClose={() => setInviteOpen(false)} roomCode={view.roomCode} roomName={view.roomName} />

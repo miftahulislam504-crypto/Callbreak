@@ -1,12 +1,15 @@
+import { useEffect } from 'react';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { PANEL_FRAME } from '@/constants/ui';
 import { PanelShine } from '@/components/frame';
+import { Confetti } from '@/components/fx';
 import { Button } from '@/components/kit';
 import { Text } from '@/components/text';
 import { CREAM, GOLD, MUTED } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
 import { fmtPts } from '@/lib/rules';
+import { sfx } from '@/lib/sound';
 import type { GameView, RoomView } from '@/lib/types';
 
 const MEDAL = ['🥇', '🥈', '🥉', '4'];
@@ -22,8 +25,12 @@ export function GameOverOverlay({
   const iWon = winners.includes(view.mySeat);
   const order = game.ranking ?? [0, 1, 2, 3];
   const isHost = view.mySeat === view.hostSeat;
+  useEffect(() => {
+    sfx(iWon ? 'win' : 'lose');
+  }, [iWon]);
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center' }}>
+      {iWon ? <Confetti /> : null}
       <View style={[PANEL_FRAME, { width: Math.min(700, width - 60), maxHeight: height - 20, flexDirection: 'row', gap: 16, padding: 16 }]}>
         <PanelShine />
         {/* left: result */}

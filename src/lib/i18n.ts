@@ -241,6 +241,11 @@ const bn = {
   pkBlinds: 'ব্লাইন্ড {sb}/{bb}',
   pkLevelIn: '{n} হ্যান্ডে বাড়বে',
   pkHandsPlayed: '{n} হ্যান্ড খেলা হয়েছে',
+  soundTitle: 'সাউন্ড',
+  sfxLabel: 'গেমের শব্দ',
+  sfxHint: 'তাস পড়া, বাটন আর তোমার পালার শব্দ',
+  musicLabel: 'ব্যাকগ্রাউন্ড মিউজিক',
+  musicHint: 'মেনু আর লবিতে হালকা মিউজিক বাজবে',
 } as const;
 
 export type Key = keyof typeof bn;
@@ -484,6 +489,11 @@ const en: Dict = {
   pkBlinds: 'Blinds {sb}/{bb}',
   pkLevelIn: 'up in {n} hands',
   pkHandsPlayed: '{n} hands played',
+  soundTitle: 'Sound',
+  sfxLabel: 'Game sounds',
+  sfxHint: 'Cards, buttons and your-turn alerts',
+  musicLabel: 'Background music',
+  musicHint: 'Soft music in the menus and the lobby',
 };
 
 export type Lang = 'bn' | 'en';

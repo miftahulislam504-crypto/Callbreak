@@ -7,6 +7,7 @@ import { PanelShine } from '@/components/frame';
 import { Text } from '@/components/text';
 import { CARD_BLACK, CARD_RED, CREAM, GOLD, IVORY, IVORY_EDGE, MUTED } from '@/constants/palette';
 import { hapticTap } from '@/lib/haptics';
+import { sfx } from '@/lib/sound';
 import type { T } from '@/lib/i18n';
 import type { GameView } from '@/lib/types';
 
@@ -28,6 +29,7 @@ function BidCard({ n, i, w, onPress, t }: { n: number; i: number; w: number; onP
       <Pressable
         onPress={() => {
           hapticTap();
+          sfx('bid');
           onPress();
         }}
         style={({ pressed }) => ({

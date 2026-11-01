@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 
 import { hapticTap, hapticWarn } from '@/lib/haptics';
+import { markOwnPlay, sfx } from '@/lib/sound';
 import type { Card } from '@/lib/types';
 
 import { CARD_RATIO, PlayingCard } from './PlayingCard';
@@ -113,14 +114,19 @@ export function Hand({
     if (!canPlay) return;
     if (!isLegal(c)) {
       hapticWarn();
+      sfx('illegal');
       onIllegal();
       return;
     }
     if (active === key(c)) {
+      // The slap plays now, not after the server answers; the table sound hook skips the echo of this card.
+      markOwnPlay();
+      sfx('card_play');
       onPlay(c);
       return;
     }
     hapticTap();
+    sfx('select');
     setSel({ k: key(c), n });
   };
 

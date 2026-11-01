@@ -7,12 +7,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/text';
 import { Banner, PillButton } from '@/components/kit';
 import { useTrickDisplay, useTurnTimer } from '@/components/table/hooks';
+import { useTrickSounds, useTurnTicks } from '@/components/table/useTableSounds';
 import { LeaveDialog } from '@/components/table/LeaveDialog';
 import { VoiceButton } from '@/components/table/VoiceButton';
 import { CREAM, GOLD, ROSE } from '@/constants/palette';
 import { HUD_PLATE } from '@/constants/ui';
 import { SUIT_SYMBOL } from '@/lib/cards';
 import { hapticTurn } from '@/lib/haptics';
+import { sfx } from '@/lib/sound';
 import { errorText, useT } from '@/lib/i18n';
 import type { Card, Suit, TNRoomView } from '@/lib/types';
 import { useRoom } from '@/state/room';
@@ -42,8 +44,14 @@ export function TwentyNineScreen({ view }: { view: TNRoomView }) {
   // A nudge when it becomes your turn (once per turn: the key changes with the phase and your hand size).
   const turnKey = myTurn ? `${game!.round}:${game!.phase}:${game!.handCounts[me]}:${game!.bids[me]}` : null;
   useEffect(() => {
-    if (turnKey) hapticTurn();
+    if (turnKey) {
+      hapticTurn();
+      sfx('your_turn');
+    }
   }, [turnKey]);
+
+  useTrickSounds(trick, me);
+  useTurnTicks(myTurn, view.deadline, view.serverTime);
 
   // Tell everyone when someone asks for trump and it is shown.
   const seenReveal = useRef<string>('');

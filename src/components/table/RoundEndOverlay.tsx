@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 
 import { PANEL_FRAME } from '@/constants/ui';
@@ -6,6 +7,7 @@ import { Text } from '@/components/text';
 import { CARD_RED, CREAM, GOLD, GREEN_OK, MUTED } from '@/constants/palette';
 import type { T } from '@/lib/i18n';
 import { fmtPts, isNoBidRound } from '@/lib/rules';
+import { sfx } from '@/lib/sound';
 import type { GameView, RoomView } from '@/lib/types';
 
 import { useCountdownSeconds } from './hooks';
@@ -16,6 +18,10 @@ export function RoundEndOverlay({ view, game, t }: { view: RoomView; game: GameV
   const { width } = useWindowDimensions();
   const secs = useCountdownSeconds(view.nextRoundAt, view.serverTime);
   const r = game.history[game.history.length - 1];
+  // The overlay only appears once the last trick is swept away, so this is the round-over moment.
+  useEffect(() => {
+    sfx('round_end');
+  }, []);
   if (!r) return null;
   const top = Math.max(...game.totals);
   const noBid = isNoBidRound(r.round);
