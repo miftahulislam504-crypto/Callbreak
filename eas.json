@@ -6,7 +6,8 @@
     "preview": {
       "distribution": "internal",
       "environment": "preview",
-      "android": { "buildType": "apk" }
+      "android": { "buildType": "apk" },
+      "env": { "CB_ARM64_ONLY": "1" }
     },
     "production": {
       "environment": "production",
