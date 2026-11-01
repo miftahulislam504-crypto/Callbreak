@@ -11,6 +11,8 @@ import type { T } from '@/lib/i18n';
 import { fmtPts } from '@/lib/rules';
 import { sfx } from '@/lib/sound';
 import type { GameView, RoomView } from '@/lib/types';
+import Animated from 'react-native-reanimated';
+import { DIM_IN, POP_IN } from '@/constants/motion';
 
 const MEDAL = ['🥇', '🥈', '🥉', '4'];
 
@@ -29,9 +31,9 @@ export function GameOverOverlay({
     sfx(iWon ? 'win' : 'lose');
   }, [iWon]);
   return (
-    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center' }}>
+    <Animated.View entering={DIM_IN} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center' }}>
       {iWon ? <Confetti /> : null}
-      <View style={[PANEL_FRAME, { width: Math.min(700, width - 60), maxHeight: height - 20, flexDirection: 'row', gap: 16, padding: 16 }]}>
+      <Animated.View entering={POP_IN} style={[PANEL_FRAME, { width: Math.min(700, width - 60), maxHeight: height - 20, flexDirection: 'row', gap: 16, padding: 16 }]}>
         <PanelShine />
         {/* left: result */}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
@@ -58,7 +60,7 @@ export function GameOverOverlay({
             <Button compact variant="danger" title={t('leave')} onPress={onLeave} />
           </View>
         </View>
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 }

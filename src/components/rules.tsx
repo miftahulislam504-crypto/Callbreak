@@ -8,7 +8,6 @@ import { txt } from '@/constants/fonts';
 import { ACCENT, CREAM, GOLD, GOLD_LINE, GOLD_LINE_SOFT, LINE, MUTED, ON_GOLD, PANEL } from '@/constants/palette';
 import { R } from '@/constants/ui';
 import { GUIDE_UI, type Block } from '@/lib/rulesContent';
-import type { Lang } from '@/lib/i18n';
 import type { Card, Suit } from '@/lib/types';
 
 const BODY = 'rgba(246,241,227,0.92)';
@@ -41,8 +40,8 @@ function Box({ children, tint, line }: { children: ReactNode; tint: string; line
 }
 
 /** One piece of a rules section: text, list, steps, sample cards, a played trick, an example box, a table... */
-export function BlockView({ block: b, lang }: { block: Block; lang: Lang }) {
-  const ui = GUIDE_UI[lang];
+export function BlockView({ block: b }: { block: Block }) {
+  const ui = GUIDE_UI;
 
   switch (b.t) {
     case 'p':

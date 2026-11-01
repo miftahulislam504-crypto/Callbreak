@@ -19,9 +19,9 @@ export const shadow = (level: 1 | 2 | 3) =>
 
 /** Soft dark shadow behind headings, so they sit on the felt instead of floating. */
 export const TITLE_SHADOW = {
-  textShadowColor: 'rgba(0,0,0,0.5)',
+  textShadowColor: 'rgba(0,0,0,0.6)',
   textShadowOffset: { width: 0, height: 2 },
-  textShadowRadius: 3,
+  textShadowRadius: 1,
 } as const;
 
 /**

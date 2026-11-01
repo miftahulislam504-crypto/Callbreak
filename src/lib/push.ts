@@ -7,7 +7,7 @@ import { deleteDoc, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firest
 import { Platform } from 'react-native';
 
 import { getFirebase } from './firebase';
-import { translate, useLang } from './i18n';
+import { translate } from './i18n';
 
 const CHANNEL = 'invites';
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
@@ -72,14 +72,13 @@ export async function notifyInvitePush(toUid: string, fromName: string, roomName
     const snap = await getDoc(doc(getFirebase().db, 'pushTokens', toUid));
     const token = snap.exists() ? snap.get('token') : null;
     if (typeof token !== 'string' || !TOKEN_RE.test(token)) return;
-    const lang = useLang.getState().lang;
     await fetch(EXPO_PUSH_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
         to: token,
-        title: translate(lang, 'appName'),
-        body: translate(lang, 'pushInviteBody', { name: fromName, room: roomName }),
+        title: translate('appName'),
+        body: translate('pushInviteBody', { name: fromName, room: roomName }),
         sound: 'default',
         channelId: CHANNEL,
         priority: 'high',

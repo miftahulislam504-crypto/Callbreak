@@ -13,7 +13,7 @@ import { txt } from '@/constants/fonts';
 import { BG_DEEP, CREAM, GOLD, GOLD_DEEP, GOLD_RIM, LINE, MUTED, PANEL } from '@/constants/palette';
 import { shadow, TITLE_SHADOW } from '@/constants/ui';
 import { gameInfo } from '@/lib/games';
-import { errorText, useLang, useT } from '@/lib/i18n';
+import { errorText, useT } from '@/lib/i18n';
 import { GUIDES } from '@/lib/rulesContent';
 import { useGamePick } from '@/state/gamePick';
 import { useRoom } from '@/state/room';
@@ -41,14 +41,13 @@ function GameCrest({ icon, size = 76 }: { icon: React.ComponentProps<typeof Ioni
  */
 export function MenuPage({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   const t = useT();
-  const lang = useLang((s) => s.lang);
   const game = useGamePick((s) => s.game);
   const { width } = useWindowDimensions();
   const { view, error, server, clearError } = useRoom();
   if (view) return <Redirect href={view.status === 'lobby' ? '/lobby' : '/game'} />;
 
   const info = gameInfo(game);
-  const tagline = GUIDES[lang].find((g) => g.id === game)?.tagline ?? '';
+  const tagline = GUIDES.find((g) => g.id === game)?.tagline ?? '';
   const wide = width >= 680;
 
   return (
@@ -63,14 +62,14 @@ export function MenuPage({ title, hint, children }: { title: string; hint?: stri
 
       <View style={{ flex: 1, flexDirection: 'row', gap: 16, paddingHorizontal: 16, paddingBottom: 12 }}>
         {wide ? (
-          <Animated.View entering={FadeInLeft.duration(420)} style={{ flex: 0.8, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <Animated.View entering={FadeInLeft.duration(260)} style={{ flex: 0.8, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: 10 }}>
             <GameCrest icon={info.icon} />
             <Text numberOfLines={1} style={[txt(28), { color: GOLD, textAlign: 'center' }, TITLE_SHADOW]}>{t(info.titleKey)}</Text>
             <Text numberOfLines={3} style={[txt(13.5, false), { color: MUTED, textAlign: 'center', maxWidth: 260 }]}>{tagline}</Text>
             <CardFan width={42} />
           </Animated.View>
         ) : null}
-        <Animated.View entering={FadeInRight.duration(420).delay(60)} style={{ flex: 1.2, minWidth: 0 }}>
+        <Animated.View entering={FadeInRight.duration(260).delay(40)} style={{ flex: 1.2, minWidth: 0 }}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}

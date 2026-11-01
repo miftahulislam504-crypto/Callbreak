@@ -5,7 +5,6 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 
 import { isFirebaseConfigured } from './env';
 import { getFirebase } from './firebase';
-import { loadLang } from './i18n';
 import { Profile, cleanName, clearLocalProfile, guestName, loadProfile, saveProfile } from './profile';
 import { setIdentityProvider } from './session';
 
@@ -40,7 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [uid, profile]);
 
   useEffect(() => {
-    void loadLang();
     setIdentityProvider(async () => {
       const { uid: id, name, avatar } = me.current;
       if (!id) throw Object.assign(new Error('not_signed_in'), { code: 'auth' });

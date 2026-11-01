@@ -166,7 +166,7 @@ export function Button({
             ) : (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 {icon ? <Ionicons name={icon} size={compact ? 16 : 20} color={c.icon} /> : null}
-                <Text style={[txt(compact ? 14 : 17), { color: c.text, textAlign: 'center' }]}>{title}</Text>
+                <Text style={[txt(compact ? 14 : 17), { color: c.text, textAlign: 'center', textTransform: 'uppercase' }]}>{title}</Text>
               </View>
             )}
           </View>
@@ -194,7 +194,7 @@ export function Chip({
           : { backgroundColor: 'rgba(0,0,0,0.28)', opacity: pressed ? 0.75 : 1 },
         { opacity: disabled ? 0.4 : 1 },
       ]}>
-      <Text style={[txt(14.5), { color: selected ? ON_GOLD : CREAM }]}>{label}</Text>
+      <Text style={[txt(14.5), { color: selected ? ON_GOLD : CREAM, textTransform: 'uppercase' }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -318,7 +318,7 @@ export function PillButton({ label, onPress, tone = 'plain' }: { label: string; 
         borderWidth: 1.5, borderColor: tone === 'danger' ? 'rgba(229,72,77,0.6)' : GOLD_LINE,
         transform: [{ scale: pressed ? 0.95 : 1 }],
       })}>
-      <Text style={[txt(14), { color: tone === 'danger' ? ROSE : CREAM }]}>{label}</Text>
+      <Text style={[txt(14), { color: tone === 'danger' ? ROSE : CREAM, textTransform: 'uppercase' }]}>{label}</Text>
     </Pressable>
   );
 }

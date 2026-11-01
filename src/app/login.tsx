@@ -38,14 +38,14 @@ export default function Login() {
       <MenuBackdrop />
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 24, paddingHorizontal: 28 }}>
         {/* Left: the title screen of the game, same sign and fanned hand as the home page */}
-        <Animated.View entering={FadeInLeft.duration(560)} style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+        <Animated.View entering={FadeInLeft.duration(320)} style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
           <LogoMark title={t('appName')} />
           <CardFan width={50} />
           <Text style={[txt(16, false), { color: MUTED, textAlign: 'center' }]}>{t('tagline')}</Text>
         </Animated.View>
 
         {/* Right: sign in */}
-        <Animated.View entering={FadeInRight.duration(560).delay(160)} style={{ flex: 1, maxWidth: 420 }}>
+        <Animated.View entering={FadeInRight.duration(320).delay(80)} style={{ flex: 1, maxWidth: 420 }}>
           <ScrollView contentContainerStyle={{ gap: 10, paddingVertical: 12 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             {failed ? <Banner text={t('err_network')} onClose={() => setFailed(false)} /> : null}
             <Card style={{ gap: 14 }}>

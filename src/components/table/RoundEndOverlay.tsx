@@ -12,6 +12,8 @@ import type { GameView, RoomView } from '@/lib/types';
 
 import { useCountdownSeconds } from './hooks';
 import { signed } from './ScoreSheet';
+import Animated from 'react-native-reanimated';
+import { DIM_IN, POP_IN } from '@/constants/motion';
 
 /** Summary of the round that just ended, until the next one is dealt. */
 export function RoundEndOverlay({ view, game, t }: { view: RoomView; game: GameView; t: T }) {
@@ -26,8 +28,8 @@ export function RoundEndOverlay({ view, game, t }: { view: RoomView; game: GameV
   const top = Math.max(...game.totals);
   const noBid = isNoBidRound(r.round);
   return (
-    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
-      <View style={[PANEL_FRAME, { width: Math.min(560, width - 80), padding: 14, gap: 6 }]}>
+    <Animated.View entering={DIM_IN} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View entering={POP_IN} style={[PANEL_FRAME, { width: Math.min(560, width - 80), padding: 14, gap: 6 }]}>
         <PanelShine />
         <Text style={{ color: GOLD, fontSize: 20, fontWeight: '900', textAlign: 'center' }}>{t('roundOver', { n: r.round })}</Text>
         {view.seats.map((s, i) => {
@@ -53,7 +55,7 @@ export function RoundEndOverlay({ view, game, t }: { view: RoomView; game: GameV
           {t('targetReach', { n: game.targetScore })}
           {secs !== null ? ` · ${t('nextRoundIn', { s: secs })}` : ''}
         </Text>
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 }

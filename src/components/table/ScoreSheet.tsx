@@ -8,6 +8,8 @@ import { CARD_RED, CREAM, GOLD, GREEN_OK, MUTED, SCRIM } from '@/constants/palet
 import type { T } from '@/lib/i18n';
 import { fmtPts, isNoBidRound } from '@/lib/rules';
 import type { GameView, RoomView } from '@/lib/types';
+import Animated from 'react-native-reanimated';
+import { POP_IN } from '@/constants/motion';
 
 export const signed = (score10: number): string => `${score10 >= 0 ? '+' : '−'}${fmtPts(Math.abs(score10) / 10)}`;
 
@@ -21,6 +23,7 @@ export function ScoreSheet({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} supportedOrientations={['landscape', 'landscape-left', 'landscape-right']}>
       <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: SCRIM, alignItems: 'center', justifyContent: 'center' }}>
+        <Animated.View entering={POP_IN}>
         <Pressable
           style={[PANEL_FRAME, { width: Math.min(680, width - 60), maxHeight: height - 24, padding: 14 }]}>
           <PanelShine />
@@ -62,6 +65,7 @@ export function ScoreSheet({
             ))}
           </View>
         </Pressable>
+        </Animated.View>
       </Pressable>
     </Modal>
   );

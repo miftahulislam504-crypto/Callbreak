@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 
@@ -18,15 +18,15 @@ export const handCardWidth = (areaH: number) => Math.round(Math.min(72, Math.max
 export const handVisibleHeight = (areaH: number) => handCardWidth(areaH) * CARD_RATIO * (1 - HAND_SINK) + HAND_LIFT;
 
 function HandCard({
-  card, index, x, rot, arc, selected, dimmed, cardW, hidden, instant, onPress,
+  card, index, x, rot, arc, dimmed, cardW, hidden, instant, onPress,
 }: {
-  card: Card; index: number; x: number; rot: number; arc: number; selected: boolean;
+  card: Card; index: number; x: number; rot: number; arc: number;
   dimmed: boolean; cardW: number; hidden: boolean; instant: boolean; onPress: () => void;
 }) {
   const px = useSharedValue(x);
   const pr = useSharedValue(rot);
   const pa = useSharedValue(arc);
-  const lift = useSharedValue(0);
+  const press = useSharedValue(0);
   const deal = useSharedValue(0);
   const flip = useSharedValue(1);
   // Face down while the cards are still being dealt; turned over one after another afterwards.
@@ -37,9 +37,6 @@ function HandCard({
     pr.set(withTiming(rot, { duration: 180 }));
     pa.set(withTiming(arc, { duration: 180 }));
   }, [x, rot, arc, px, pr, pa]);
-  useEffect(() => {
-    lift.set(withSpring(selected ? -HAND_LIFT : 0, { damping: 16, stiffness: 220 }));
-  }, [selected, lift]);
   useEffect(() => {
     deal.set(withDelay(instant ? 0 : index * 35, withTiming(1, { duration: instant ? 140 : 260, easing: Easing.out(Easing.cubic) })));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,7 +64,7 @@ function HandCard({
     opacity: deal.get(),
     transform: [
       { translateX: px.get() },
-      { translateY: pa.get() + lift.get() - (1 - deal.get()) * 60 },
+      { translateY: pa.get() - press.get() * 10 - (1 - deal.get()) * 60 },
       { rotate: `${pr.get()}deg` },
       { scaleX: flip.get() },
     ],
@@ -75,8 +72,12 @@ function HandCard({
 
   return (
     <Animated.View style={[{ position: 'absolute', left: 0, top: HAND_LIFT + 4 }, style]}>
-      <Pressable onPress={onPress} hitSlop={2}>
-        <PlayingCard card={card} faceDown={faceDown} width={cardW} dimmed={dimmed} glow={selected} />
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => press.set(withTiming(1, { duration: 70 }))}
+        onPressOut={() => press.set(withSpring(0, { damping: 16, stiffness: 260 }))}
+        hitSlop={2}>
+        <PlayingCard card={card} faceDown={faceDown} width={cardW} dimmed={dimmed} />
       </Pressable>
     </Animated.View>
   );
@@ -84,7 +85,7 @@ function HandCard({
 
 /**
  * Fanned hand along the bottom edge. On your turn the playable cards are bright and the rest
- * dimmed: tap a card to raise it, tap it again to play it.
+ * dimmed: one tap on a playable card plays it (a card that is not allowed buzzes and says why).
  */
 export function Hand({
   cards, legal, canPlay, onPlay, onIllegal, areaW, areaH, leftInset = 0, rightInset = 0, hidden = false, instant = false,
@@ -105,10 +106,13 @@ export function Hand({
   const total = step * (n - 1) + cardW;
   const left0 = leftInset + (areaW - leftInset - rightInset - total) / 2;
 
-  // The selection is tied to the hand size, so it goes stale by itself once a card has been played.
-  const [sel, setSel] = useState<{ k: string; n: number } | null>(null);
-  const active = canPlay && sel && sel.n === n && cards.some((c) => key(c) === sel.k) ? sel.k : null;
   const isLegal = (c: Card) => legal.some((l) => key(l) === key(c));
+  // After a card is sent, this hand size is locked until the hand shrinks (the server answered) or 0.9 s pass
+  // (it said no), so a quick second tap cannot send the same card twice.
+  const sentAt = useRef<number | null>(null);
+  useEffect(() => {
+    sentAt.current = null;
+  }, [n]);
 
   const press = (c: Card) => {
     if (!canPlay) return;
@@ -118,16 +122,16 @@ export function Hand({
       onIllegal();
       return;
     }
-    if (active === key(c)) {
-      // The slap plays now, not after the server answers; the table sound hook skips the echo of this card.
-      markOwnPlay();
-      sfx('card_play');
-      onPlay(c);
-      return;
-    }
+    if (sentAt.current === n) return;
+    sentAt.current = n;
+    setTimeout(() => {
+      if (sentAt.current === n) sentAt.current = null;
+    }, 900);
+    // The slap plays now, not after the server answers; the table sound hook skips the echo of this card.
     hapticTap();
-    sfx('select');
-    setSel({ k: key(c), n });
+    markOwnPlay();
+    sfx('card_play');
+    onPlay(c);
   };
 
   return (
@@ -143,7 +147,6 @@ export function Hand({
             x={left0 + i * step}
             rot={off * 1.7}
             arc={off * off * 0.5}
-            selected={active === key(c)}
             dimmed={canPlay && !isLegal(c)}
             cardW={cardW}
             hidden={hidden}

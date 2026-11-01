@@ -11,17 +11,16 @@ import { txt } from '@/constants/fonts';
 import { BG_DEEP, CREAM, GOLD, GOLD_LINE_SOFT, MUTED, PANEL } from '@/constants/palette';
 import { R, TITLE_SHADOW } from '@/constants/ui';
 import { GAME_LIST } from '@/lib/games';
-import { useLang, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
 import { GUIDES, GUIDE_UI } from '@/lib/rulesContent';
 import type { GameId } from '@/lib/types';
 
 /** "How to play": the rules of all three games with examples, for new players. */
 export default function RulesScreen() {
   const t = useT();
-  const lang = useLang((s) => s.lang);
   const { game } = useLocalSearchParams<{ game?: string }>();
-  const guides = GUIDES[lang];
-  const ui = GUIDE_UI[lang];
+  const guides = GUIDES;
+  const ui = GUIDE_UI;
 
   const [id, setId] = useState<GameId>(GAME_LIST.some((g) => g.id === game) ? (game as GameId) : 'callbreak');
   const [open, setOpen] = useState<Record<string, boolean>>({});
@@ -73,7 +72,7 @@ export default function RulesScreen() {
           {guide.sections.map((s, i) => (
             <SectionCard key={`${id}:${s.id}`} index={i + 1} title={s.title} open={isOpen(s.id, i)} onToggle={() => setOpen((o) => ({ ...o, [`${id}:${s.id}`]: !isOpen(s.id, i) }))}>
               {s.blocks.map((b, bi) => (
-                <BlockView key={bi} block={b} lang={lang} />
+                <BlockView key={bi} block={b} />
               ))}
             </SectionCard>
           ))}

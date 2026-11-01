@@ -4,6 +4,8 @@ import { Client, type Room } from '@colyseus/sdk';
 import type { AnyRoomView, GameId, ServerError, VoiceDeniedReason, VoiceInfo } from './types';
 
 const TOKEN_KEY = 'cb.reconnect';
+/** How long Leave waits for the server to say goodbye before the socket is simply closed. */
+const LEAVE_WAIT_MS = 1500;
 const VOICE_REASONS: readonly VoiceDeniedReason[] = ['disabled', 'not_seated', 'rate_limited'];
 
 /**
@@ -166,17 +168,37 @@ export class GameConnection {
     }
   }
 
+  /**
+   * Leaves the room for good. The room is forgotten first, so nothing the old socket does afterwards (a late
+   * state, a reconnect, its close event) can reach the app or bring the saved token back. The server is told
+   * to free our seat, but we never wait long for it: a dead or reconnecting socket would never answer.
+   */
   async leave(): Promise<void> {
     const room = this.room;
     if (!room) return;
     this.leaving = true;
+    this.room = null;
     try {
-      await room.leave(true);
-    } catch {
-      // already gone
-    } finally {
-      if (this.room === room) this.room = null;
       await this.opts.storage.removeItem(TOKEN_KEY);
+    } catch {
+      // best effort
+    }
+    try {
+      // No automatic reconnect while we say goodbye (or ever again for this socket).
+      room.reconnection.enabled = false;
+      room.reconnection.maxRetries = 0;
+    } catch {
+      // older SDK shape: nothing to switch off
+    }
+    try {
+      await Promise.race([room.leave(true), new Promise<void>((resolve) => setTimeout(resolve, LEAVE_WAIT_MS))]);
+    } catch {
+      // the socket was already gone
+    }
+    try {
+      room.connection?.close();
+    } catch {
+      // already closed
     }
   }
 
@@ -188,20 +210,30 @@ export class GameConnection {
     this.room = room;
     this.leaving = false;
     const L = this.opts.listeners;
-    room.onMessage('state', (v: AnyRoomView) => L.onState(v));
-    room.onMessage('avatars', (m: { avatars?: unknown }) => {
-      if (Array.isArray(m?.avatars)) L.onAvatars?.(m.avatars.map((a) => (typeof a === 'string' && a ? a : null)));
+    const live = () => this.room === room; // a room we have left must stay silent
+    room.onMessage('state', (v: AnyRoomView) => {
+      if (live()) L.onState(v);
     });
-    room.onMessage('error', (e: ServerError) => L.onError(e));
-    room.onMessage('voice', (m: unknown) => L.onVoice?.(parseVoice(m)));
-    room.onDrop(() => L.onLink('reconnecting'));
+    room.onMessage('avatars', (m: { avatars?: unknown }) => {
+      if (live() && Array.isArray(m?.avatars)) L.onAvatars?.(m.avatars.map((a) => (typeof a === 'string' && a ? a : null)));
+    });
+    room.onMessage('error', (e: ServerError) => {
+      if (live()) L.onError(e);
+    });
+    room.onMessage('voice', (m: unknown) => {
+      if (live()) L.onVoice?.(parseVoice(m));
+    });
+    room.onDrop(() => {
+      if (live()) L.onLink('reconnecting');
+    });
     room.onReconnect(() => {
+      if (!live()) return;
       L.onLink('online');
       void this.saveToken(room);
       room.send('sync');
     });
     room.onLeave(() => {
-      if (this.room !== room) return;
+      if (!live()) return;
       this.room = null;
       void this.opts.storage.removeItem(TOKEN_KEY);
       L.onClosed(this.leaving ? 'left' : 'lost');

@@ -78,7 +78,7 @@ export default function Home() {
 
       {/* Header: the player's badge, then sound, rules, friends and settings */}
       <Animated.View
-        entering={FadeInDown.duration(380)}
+        entering={FadeInDown.duration(260)}
         style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 8, paddingBottom: 6, gap: 12 }}>
         <View style={{ flex: 1, minWidth: 0, flexDirection: 'row' }}>
           <View style={{ flexShrink: 1, borderRadius: 18, borderWidth: 1.5, borderColor: GOLD_LINE, overflow: 'hidden' }}>
@@ -108,13 +108,13 @@ export default function Home() {
 
       <View style={{ flex: 1, flexDirection: 'row', gap: 16, paddingHorizontal: 18, paddingTop: 4, paddingBottom: 16 }}>
         {/* Left: the game's face: the sign and a fanned hand */}
-        <Animated.View entering={FadeInLeft.duration(520)} style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: small ? 4 : 10 }}>
+        <Animated.View entering={FadeInLeft.duration(300)} style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: small ? 4 : 10 }}>
           <LogoMark title={t(gameInfo(game).titleKey)} compact={small} />
           <CardFan width={small ? 40 : 48} />
         </Animated.View>
 
         {/* Middle: the ways to play. Quick match is the one to tap, so it shines and breathes. */}
-        <Animated.View entering={FadeInUp.duration(480).delay(120)} style={{ flex: 1.05, minWidth: 0, gap: 10 }}>
+        <Animated.View entering={FadeInUp.duration(300).delay(60)} style={{ flex: 1.05, minWidth: 0, gap: 10 }}>
           <GameSwitch />
           <GameButton big shine pulse tone="gold" icon="flash" title={t('quickMatch')} hint={t('quickHint')} style={{ flex: 1.7 }} onPress={() => router.push('/quick-match')} />
           <View style={{ flex: 1, flexDirection: 'row', gap: 10 }}>
@@ -125,7 +125,7 @@ export default function Home() {
         </Animated.View>
 
         {/* Right: public rooms, on a small felt table */}
-        <Animated.View entering={FadeInRight.duration(520).delay(220)} style={{ flex: 1.05, minWidth: 0 }}>
+        <Animated.View entering={FadeInRight.duration(300).delay(120)} style={{ flex: 1.05, minWidth: 0 }}>
           <TablePanel style={{ flex: 1 }} innerStyle={{ padding: 10, gap: 8 }}>
             <Row style={{ justifyContent: 'space-between' }}>
               <Row style={{ gap: 8, flexShrink: 1 }}>

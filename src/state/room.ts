@@ -118,9 +118,10 @@ export const useRoom = create<RoomState>((set, get) => {
     send: (type, payload) => conn.send(type, payload),
     requestVoice: () => conn.requestVoice(),
     async leaveRoom() {
-      await conn.leave();
+      // Clear the table first so the screen goes home at once; the socket closes in the background.
       useVoice.getState().reset();
-      set({ view: null, link: 'online' });
+      set({ view: null, avatars: [], link: 'online' });
+      await conn.leave();
     },
     clearError: () => set({ error: null }),
   };

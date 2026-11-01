@@ -61,7 +61,7 @@ export function GameButton({
                 </View>
               ) : null}
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text numberOfLines={big ? 1 : 2} adjustsFontSizeToFit minimumFontScale={0.75} style={[txt(big ? 24 : 14), { color: c.text }]}>{title}</Text>
+                <Text numberOfLines={big ? 1 : 2} adjustsFontSizeToFit minimumFontScale={0.75} style={[txt(big ? 24 : 14), { color: c.text, textTransform: 'uppercase' }]}>{title}</Text>
                 {hint ? <Text numberOfLines={2} style={[txt(12, false), { color: c.text, opacity: 0.8 }]}>{hint}</Text> : null}
               </View>
             </View>

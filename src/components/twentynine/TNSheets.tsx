@@ -10,6 +10,8 @@ import { sfx } from '@/lib/sound';
 import type { T } from '@/lib/i18n';
 import { SUIT_SYMBOL } from '@/lib/cards';
 import type { Suit, TNGameView } from '@/lib/types';
+import Animated from 'react-native-reanimated';
+import { SHEET_IN } from '@/constants/motion';
 
 const SUITS: Suit[] = ['S', 'H', 'D', 'C'];
 const panelBase = {
@@ -26,7 +28,7 @@ export function TNBidSheet({ game, names, onBid, t }: { game: TNGameView; names:
   const cellW = Math.max(44, Math.min(60, Math.floor((Math.min(width - 140, 560) - gap * (perRow - 1)) / perRow)));
   return (
     <View pointerEvents="box-none" style={dim}>
-      <View style={[panelBase, { maxHeight: height - 30, maxWidth: width - 40 }]}>
+      <Animated.View entering={SHEET_IN} style={[panelBase, { maxHeight: height - 30, maxWidth: width - 40 }]}>
         <PanelShine />
         <View style={{ alignItems: 'center', gap: 2 }}>
           <Text style={{ color: CREAM, fontSize: 20, fontWeight: '900' }}>{t('chooseBid')}</Text>
@@ -65,7 +67,7 @@ export function TNBidSheet({ game, names, onBid, t }: { game: TNGameView; names:
           onPress={() => onBid(0)}
           style={{ minWidth: 150 }}
         />
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -76,7 +78,7 @@ export function TNTrumpSheet({ onPick, t }: { onPick: (s: Suit) => void; t: T })
   const cell = Math.max(64, Math.min(88, Math.floor((width - 200) / 4)));
   return (
     <View pointerEvents="box-none" style={dim}>
-      <View style={panelBase}>
+      <Animated.View entering={SHEET_IN} style={panelBase}>
         <PanelShine />
         <View style={{ alignItems: 'center', gap: 2 }}>
           <Text style={{ color: CREAM, fontSize: 20, fontWeight: '900' }}>{t('tnPickTrump')}</Text>
@@ -99,7 +101,7 @@ export function TNTrumpSheet({ onPick, t }: { onPick: (s: Suit) => void; t: T })
             </Pressable>
           ))}
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }

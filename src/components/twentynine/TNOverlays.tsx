@@ -12,6 +12,8 @@ import { SUIT_SYMBOL } from '@/lib/cards';
 import type { T } from '@/lib/i18n';
 import { sfx } from '@/lib/sound';
 import type { Suit, TNGameView, TNRoomView } from '@/lib/types';
+import Animated from 'react-native-reanimated';
+import { DIM_IN, POP_IN } from '@/constants/motion';
 
 export const teamSeats = (team: number): number[] => (team === 0 ? [0, 2] : [1, 3]);
 export const teamOfSeat = (seat: number): number => seat % 2;
@@ -33,8 +35,8 @@ export function TNRoundEndOverlay({ view, game, t }: { view: TNRoomView; game: T
   const dTeam = teamOfSeat(r.declarer);
   const myTeam = teamOfSeat(view.mySeat);
   return (
-    <View style={[dim, { backgroundColor: 'rgba(0,0,0,0.55)' }]}>
-      <View style={[PANEL_FRAME, { width: Math.min(560, width - 80), padding: 14, gap: 8 }]}>
+    <Animated.View entering={DIM_IN} style={[dim, { backgroundColor: 'rgba(0,0,0,0.55)' }]}>
+      <Animated.View entering={POP_IN} style={[PANEL_FRAME, { width: Math.min(560, width - 80), padding: 14, gap: 8 }]}>
         <PanelShine />
         <Text style={{ color: GOLD, fontSize: 20, fontWeight: '900', textAlign: 'center' }}>{t('roundOver', { n: r.round })}</Text>
         <View style={{ alignItems: 'center', gap: 2 }}>
@@ -69,8 +71,8 @@ export function TNRoundEndOverlay({ view, game, t }: { view: TNRoomView; game: T
           {t('tnTargetChip', { n: game.targetScore })}
           {secs !== null ? ` · ${t('nextRoundIn', { s: secs })}` : ''}
         </Text>
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -88,9 +90,9 @@ export function TNGameOverOverlay({
     sfx(iWon ? 'win' : 'lose');
   }, [iWon]);
   return (
-    <View style={[dim, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+    <Animated.View entering={DIM_IN} style={[dim, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
       {iWon ? <Confetti /> : null}
-      <View style={[PANEL_FRAME, { width: Math.min(700, width - 60), maxHeight: height - 20, flexDirection: 'row', gap: 16, padding: 16 }]}>
+      <Animated.View entering={POP_IN} style={[PANEL_FRAME, { width: Math.min(700, width - 60), maxHeight: height - 20, flexDirection: 'row', gap: 16, padding: 16 }]}>
         <PanelShine />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <Text style={{ fontSize: 54 }}>{iWon ? '🏆' : '🎴'}</Text>
@@ -114,8 +116,8 @@ export function TNGameOverOverlay({
             <Button compact variant="danger" title={t('leave')} onPress={onLeave} />
           </View>
         </View>
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -127,6 +129,7 @@ export function TNScoreSheet({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} supportedOrientations={['landscape', 'landscape-left', 'landscape-right']}>
       <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: SCRIM, alignItems: 'center', justifyContent: 'center' }}>
+        <Animated.View entering={POP_IN}>
         <Pressable style={[PANEL_FRAME, { width: Math.min(680, width - 60), maxHeight: height - 24, padding: 14 }]}>
           <PanelShine />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -171,6 +174,7 @@ export function TNScoreSheet({
             ))}
           </View>
         </Pressable>
+        </Animated.View>
       </Pressable>
     </Modal>
   );

@@ -1,6 +1,6 @@
 # UI style: one look on every page
 
-The home page is the reference: dark green felt, gold rims, chunky game buttons, rounded Baloo Da 2 text.
+The home page is the reference: dark green felt, gold rims, chunky game buttons, Lilita One for titles / buttons / numbers and Rubik for small text.
 Everything else uses the same shared pieces, so a new screen looks right without extra work.
 
 | Need | Use | File |
@@ -17,8 +17,9 @@ Everything else uses the same shared pieces, so a new screen looks right without
 
 Rules of thumb:
 
-- The font is one family. `Text` maps `fontWeight` to the right Baloo weight for you (400-600 semi-bold, 700 bold, 800-900 extra-bold)
-  and adds a roomy `lineHeight` so Bengali matras are not clipped. Do not set `fontFamily` and `fontWeight` together.
+- Two fonts: Lilita One (display: titles, buttons, scores, card numbers) and Rubik (small text). `Text` maps `fontWeight` to the right family for you (400-600 Rubik medium, 700 Rubik semi-bold, 800-900 Lilita One). Do not set `fontFamily` and `fontWeight` together.
+- The game is English only (`lib/i18n.ts` has one dictionary). Button, chip and pill labels are drawn in capitals.
+- Dialogs, sheets and overlays enter with `POP_IN` / `SHEET_IN` / `DIM_IN` from `constants/motion.ts`; screens use the router's fade / slide. Keep new motion small.
 - Primary action = gold, normal action = green, quiet action = `secondary` (dark), leaving / deleting = `danger`.
 - Gold is for emphasis (titles, the picked option, the main button); do not use it for body text.
 - A new colour goes into `palette.ts` first, then into the screen.

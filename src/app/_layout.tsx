@@ -1,4 +1,5 @@
-import { BalooDa2_600SemiBold, BalooDa2_700Bold, BalooDa2_800ExtraBold } from '@expo-google-fonts/baloo-da-2';
+import { LilitaOne_400Regular } from '@expo-google-fonts/lilita-one';
+import { Rubik_500Medium, Rubik_600SemiBold } from '@expo-google-fonts/rubik';
 import { useFonts } from 'expo-font';
 import { DarkTheme, Stack, ThemeProvider, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -19,8 +20,8 @@ SplashScreen.preventAutoHideAsync();
 
 function Gate() {
   const { status, uid, profile } = useAuth();
-  // The game's one typeface (see constants/fonts.ts). If it fails to load, carry on with the system font rather than blocking the app.
-  const [fontsLoaded, fontError] = useFonts({ BalooDa2_600SemiBold, BalooDa2_700Bold, BalooDa2_800ExtraBold });
+  // The game's two typefaces (see constants/fonts.ts). If they fail to load, carry on with the system font rather than blocking the app.
+  const [fontsLoaded, fontError] = useFonts({ LilitaOne_400Regular, Rubik_500Medium, Rubik_600SemiBold });
   const bootstrap = useRoom((s) => s.bootstrap);
   const foreground = useRoom((s) => s.foreground);
 
@@ -72,7 +73,7 @@ function Gate() {
   if (status === 'loading' || !(fontsLoaded || fontError)) return null;
   return (
     <>
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: BG_DEEP } }}>
+      <Stack screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 240, contentStyle: { backgroundColor: BG_DEEP } }}>
         <Stack.Protected guard={status === 'in'}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="lobby" options={{ gestureEnabled: false }} />

@@ -5,13 +5,13 @@ import Animated, { FadeInLeft, FadeInRight } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/text';
-import { Button, Card, CardTitle, Chip, Field, GoldAvatar, MenuBackdrop, PageHeader, Row, ToggleRow } from '@/components/kit';
+import { Button, Card, CardTitle, Field, GoldAvatar, MenuBackdrop, PageHeader, Row, ToggleRow } from '@/components/kit';
 import { txt } from '@/constants/fonts';
 import { BG_DEEP, CREAM, GOLD, MUTED, ROSE } from '@/constants/palette';
 import { useAuth } from '@/lib/auth';
 import { pickAvatar } from '@/lib/avatarImage';
 import { LIMITS, SERVER_URL } from '@/lib/env';
-import { useLang, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
 import { useSound } from '@/lib/sound';
 import { useRoom } from '@/state/room';
 import { useSocial } from '@/state/social';
@@ -21,7 +21,6 @@ export default function ProfileScreen() {
   const { profile, uid, local, updateName, updateAvatar, signOut } = useAuth();
   const leaveRoom = useRoom((s) => s.leaveRoom);
   const send = useRoom((s) => s.send);
-  const { lang, setLang } = useLang();
   const sfxOn = useSound((x) => x.sfx);
   const musicOn = useSound((x) => x.music);
   const [name, setName] = useState(profile?.name ?? '');
@@ -54,7 +53,7 @@ export default function ProfileScreen() {
       <PageHeader title={t('profileTitle')} backLabel={t('back')} onBack={() => router.back()} />
 
       <View style={{ flex: 1, flexDirection: 'row', gap: 12, paddingHorizontal: 16 }}>
-        <Animated.View entering={FadeInLeft.duration(420)} style={col}>
+        <Animated.View entering={FadeInLeft.duration(260)} style={col}>
         <ScrollView style={col} contentContainerStyle={{ gap: 12, paddingBottom: 14 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {/* The player's badge: big photo in a gold frame, the name, and the photo buttons */}
           <Card>
@@ -90,19 +89,12 @@ export default function ProfileScreen() {
         </ScrollView>
         </Animated.View>
 
-        <Animated.View entering={FadeInRight.duration(420).delay(80)} style={col}>
+        <Animated.View entering={FadeInRight.duration(260).delay(40)} style={col}>
         <ScrollView style={col} contentContainerStyle={{ gap: 12, paddingBottom: 14 }} showsVerticalScrollIndicator={false}>
           <Card>
             <CardTitle title={t('soundTitle')} />
             <ToggleRow icon="musical-note" label={t('sfxLabel')} hint={t('sfxHint')} value={sfxOn} onChange={(on) => useSound.getState().setSfx(on)} />
             <ToggleRow icon="musical-notes" label={t('musicLabel')} hint={t('musicHint')} value={musicOn} onChange={(on) => useSound.getState().setMusic(on)} />
-          </Card>
-          <Card>
-            <CardTitle title={t('language')} />
-            <Row>
-              <Chip label="বাংলা" selected={lang === 'bn'} onPress={() => setLang('bn')} />
-              <Chip label="English" selected={lang === 'en'} onPress={() => setLang('en')} />
-            </Row>
           </Card>
           <Card>
             <Text style={{ color: MUTED, fontSize: 13 }}>{t('mode')}: <Text style={{ color: CREAM }}>{local ? t('modeLocal') : t('modeFirebase')}</Text></Text>
