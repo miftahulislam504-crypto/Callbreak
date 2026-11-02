@@ -18,6 +18,7 @@ import { sfx } from '@/lib/sound';
 import { errorText, useT } from '@/lib/i18n';
 import type { Card, Suit, TNRoomView } from '@/lib/types';
 import { useRoom } from '@/state/room';
+import { useBoard } from '@/state/look';
 
 import { TNGameOverOverlay, TNRoundEndOverlay, TNScoreSheet, teamOfSeat } from './TNOverlays';
 import { TNBidSheet, TNTrumpSheet } from './TNSheets';
@@ -29,6 +30,7 @@ const signed = (n: number): string => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(
 /** The 29 game screen: table, header chips, the bid / trump sheets and the round / game over overlays. */
 export function TwentyNineScreen({ view }: { view: TNRoomView }) {
   const t = useT();
+  const board = useBoard();
   const { link, error, send, leaveRoom, clearError } = useRoom();
   const game = view.game;
   const trick = useTrickDisplay(game);
@@ -100,7 +102,7 @@ export function TwentyNineScreen({ view }: { view: TNRoomView }) {
   const trumpRed = game.trumpSuit === 'H' || game.trumpSuit === 'D';
 
   return (
-    <SafeAreaView edges={['left', 'right']} style={{ flex: 1, backgroundColor: '#5A3718' }}>
+    <SafeAreaView edges={['left', 'right']} style={{ flex: 1, backgroundColor: board.edge }}>
       <StatusBar hidden />
       <View style={{ flex: 1 }}>
         <TNTable
