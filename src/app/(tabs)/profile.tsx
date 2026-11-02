@@ -97,6 +97,10 @@ export default function ProfileScreen() {
             <ToggleRow icon="musical-notes" label={t('musicLabel')} hint={t('musicHint')} value={musicOn} onChange={(on) => useSound.getState().setMusic(on)} />
           </Card>
           <Card>
+            <CardTitle title={t('appearanceTitle')} />
+            <Button compact icon="color-palette" title={t('customizeTitle')} onPress={() => router.push('/customize')} />
+          </Card>
+          <Card>
             <Text style={{ color: MUTED, fontSize: 13 }}>{t('mode')}: <Text style={{ color: CREAM }}>{local ? t('modeLocal') : t('modeFirebase')}</Text></Text>
             <Text style={{ color: MUTED, fontSize: 13 }}>{t('playerId')}: <Text style={{ color: CREAM }}>{uid?.slice(0, 8)}</Text></Text>
             <Text style={{ color: MUTED, fontSize: 13 }}>{t('server')}: <Text style={{ color: CREAM }}>{SERVER_URL}</Text></Text>

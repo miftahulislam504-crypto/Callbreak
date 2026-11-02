@@ -25,6 +25,7 @@ import { isNoBidRound } from '@/lib/rules';
 import { sfx } from '@/lib/sound';
 import { isCallBreak, isPoker, isTwentyNine, type Card } from '@/lib/types';
 import { useRoom } from '@/state/room';
+import { useBoard } from '@/state/look';
 
 const chip = HUD_PLATE;
 
@@ -40,6 +41,7 @@ export default function Game() {
 
 function CallBreakGame() {
   const t = useT();
+  const board = useBoard();
   const { view: anyView, link, error, send, leaveRoom, clearError } = useRoom();
   const view = isCallBreak(anyView) ? anyView : null;
   const game = view?.game ?? null;
@@ -100,7 +102,7 @@ function CallBreakGame() {
   const showBidSheet = game.phase === 'bidding' && myTurn;
 
   return (
-    <SafeAreaView edges={['left', 'right']} style={{ flex: 1, backgroundColor: '#5A3718' }}>
+    <SafeAreaView edges={['left', 'right']} style={{ flex: 1, backgroundColor: board.edge }}>
       <StatusBar hidden />
       <View style={{ flex: 1 }}>
         <Table

@@ -1,22 +1,22 @@
-import { View } from 'react-native';
+import { router } from 'expo-router';
 
-import { Text } from '@/components/text';
-import { Card } from '@/components/kit';
+import { GameButton } from '@/components/gameui';
 import { MenuPage } from '@/components/menu';
-import { MUTED } from '@/constants/palette';
 import { useT } from '@/lib/i18n';
 
-// Intentionally empty for now: new options will be added here later.
+// More options live here. For now: how your cards and table look.
 export default function More() {
   const t = useT();
   return (
     <MenuPage title={t('moreTitle')}>
-      <Card>
-        <View style={{ alignItems: 'center', paddingVertical: 28, gap: 8 }}>
-          <Text style={{ fontSize: 38, color: 'rgba(255,255,255,0.18)' }}>♠</Text>
-          <Text style={{ color: MUTED, fontSize: 14, textAlign: 'center' }}>{t('comingSoon')}</Text>
-        </View>
-      </Card>
+      <GameButton
+        tone="green"
+        icon="color-palette"
+        title={t('customizeTitle')}
+        hint={t('customizeHint')}
+        style={{ height: 76 }}
+        onPress={() => router.push('/customize')}
+      />
     </MenuPage>
   );
 }

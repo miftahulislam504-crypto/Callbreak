@@ -44,6 +44,10 @@ export const SCRIM = 'rgba(0,0,0,0.58)';
 // Thin gold lines on plates / frames.
 export const GOLD_LINE = 'rgba(242,193,78,0.35)';
 export const GOLD_LINE_SOFT = 'rgba(242,193,78,0.18)';
+/** Option tiles of the card / table picker: resting, picked, and their edge. */
+export const TILE = 'rgba(0,0,0,0.28)';
+export const TILE_PICKED = 'rgba(242,193,78,0.16)';
+export const TILE_EDGE = 'rgba(255,255,255,0.12)';
 
 // ---- Card-room materials (menus use the same felt, wood rim and brass as the table) -------------------
 export const FELT_LIGHT = '#14724A';

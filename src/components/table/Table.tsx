@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Text } from '@/components/text';
-import { CREAM, GOLD, GOLD_DEEP, INK, ON_GOLD, WOOD, WOOD_LINE } from '@/constants/palette';
+import { CREAM, GOLD, GOLD_DEEP, INK, ON_GOLD } from '@/constants/palette';
 import { isNoBidRound } from '@/lib/rules';
 import { canMuteSeat } from '@/lib/voice/ui';
 import { useRoom } from '@/state/room';
@@ -14,6 +14,7 @@ import type { Card, GameView, RoomView } from '@/lib/types';
 
 import { cardsReceived, dealProgress } from '@/lib/dealing';
 
+import { Board } from './Board';
 import { DealAnimation } from './DealAnimation';
 import { Hand, handVisibleHeight } from './Hand';
 import type { DealClock } from './hooks';
@@ -21,22 +22,9 @@ import { PlayerSeat, type SeatSide } from './PlayerSeat';
 import type { TurnTimer } from './TimerBar';
 import { TrickArea, trickAreaSize, trickCardWidth } from './TrickArea';
 
-/** Wooden planks, like the reference table, with a soft dark edge so the cards stand out. */
+/** The table behind the cards: the board the player picked (walnut planks unless they chose another). Kept under this name for the 29 table. */
 export function Wood() {
-  return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: WOOD[0] }}>
-      {WOOD.map((c, i) => (
-        <View key={i} style={{ flex: 1, backgroundColor: c, borderBottomWidth: 1.5, borderBottomColor: WOOD_LINE }}>
-          <View style={{ position: 'absolute', left: `${(i * 23) % 60}%`, top: '38%', width: '22%', height: 1, backgroundColor: 'rgba(90,50,20,0.25)' }} />
-          <View style={{ position: 'absolute', left: `${30 + ((i * 41) % 50)}%`, top: '66%', width: '14%', height: 1, backgroundColor: 'rgba(90,50,20,0.2)' }} />
-        </View>
-      ))}
-      <View style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '22%', backgroundColor: 'rgba(0,0,0,0.12)' }} />
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '34%', backgroundColor: 'rgba(0,0,0,0.16)' }} />
-      <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '8%', backgroundColor: 'rgba(0,0,0,0.08)' }} />
-      <View style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '8%', backgroundColor: 'rgba(0,0,0,0.08)' }} />
-    </View>
-  );
+  return <Board />;
 }
 
 /** Small popup next to a seat: mute or unmute that player (on this device only). Tap outside to close. */

@@ -241,6 +241,14 @@ const en = {
   sfxHint: 'Cards, buttons and your-turn alerts',
   musicLabel: 'Background music',
   musicHint: 'Soft music in the menus and the lobby',
+  customizeTitle: 'Cards & table',
+  customizeHint: 'Pick how your cards and table look',
+  cardDesign: 'Card design',
+  cardBack: 'Card back',
+  tableDesign: 'Table',
+  resetLook: 'Reset',
+  appearanceTitle: 'Appearance',
+  appearanceHint: 'Card designs, card backs and tables. Only you see your choice.',
 } as const;
 
 export type Key = keyof typeof en;
