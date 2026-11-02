@@ -4,6 +4,7 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSpri
 
 import { PANEL_FRAME } from '@/constants/ui';
 import { PanelShine } from '@/components/frame';
+import { BidDock } from './BidDock';
 import { Text } from '@/components/text';
 import { CARD_BLACK, CARD_RED, CREAM, GOLD, IVORY, IVORY_EDGE, MUTED } from '@/constants/palette';
 import { hapticTap } from '@/lib/haptics';
@@ -47,7 +48,7 @@ function BidCard({ n, i, w, onPress, t }: { n: number; i: number; w: number; onP
   );
 }
 
-/** Shown over the middle of the table on your turn to bid. */
+/** Shown just above your hand on your turn to bid; your cards stay visible below it. */
 export function BidSheet({ game, onBid, t }: { game: GameView; onBid: (n: number) => void; t: T }) {
   const { width, height } = useWindowDimensions();
   const bids = Array.from({ length: game.maxBid - game.minBid + 1 }, (_, i) => game.minBid + i);
@@ -60,16 +61,16 @@ export function BidSheet({ game, onBid, t }: { game: GameView; onBid: (n: number
   const gap = 8;
   const pad = 18;
   const maxPanel = Math.min(width - 120, 640);
-  const cardW = Math.max(44, Math.min(64, Math.floor((maxPanel - pad * 2 - gap * (bids.length - 1)) / bids.length)));
+  const cardW = Math.max(44, Math.min(56, Math.floor((maxPanel - pad * 2 - gap * (bids.length - 1)) / bids.length)));
   const panelW = cardW * bids.length + gap * (bids.length - 1) + pad * 2;
 
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.38)' }}>
+    <BidDock>
       <Animated.View
         style={[
           PANEL_FRAME,
           {
-            width: panelW, maxHeight: height - 40, paddingVertical: 14, paddingHorizontal: pad, gap: 12, alignItems: 'center',
+            width: panelW, maxHeight: height - 40, paddingVertical: 10, paddingHorizontal: pad, gap: 8, alignItems: 'center',
           },
           panel,
         ]}>
@@ -89,6 +90,6 @@ export function BidSheet({ game, onBid, t }: { game: GameView; onBid: (n: number
           ))}
         </View>
       </Animated.View>
-    </View>
+    </BidDock>
   );
 }
