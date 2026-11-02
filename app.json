@@ -79,11 +79,7 @@
               "exclude": [
                 "**/libagora_*_extension.so"
               ]
-            },
-            "useLegacyPackaging": true,
-            "enableMinifyInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true,
-            "extraProguardRules": "-keep class io.agora.** { *; }\n-dontwarn io.agora.**"
+            }
           }
         }
       ]
